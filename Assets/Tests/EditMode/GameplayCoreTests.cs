@@ -96,6 +96,20 @@ public sealed class GameplayCoreTests
         Assert.AreEqual(0, RewardCalculator.CalculateFailure().Treats);
     }
 
+
+    [Test]
+    public void PauseStopsGameplayAndResumeRestoresIt()
+    {
+        var controller = new GameplayController();
+        controller.LoadPuzzle(FourByFour(), 1, CharacterId.Capybara);
+        controller.Pause();
+        Assert.AreEqual(GameplayState.Paused, controller.CurrentState);
+        Assert.AreEqual(0f, UnityEngine.Time.timeScale);
+        controller.Resume();
+        Assert.AreEqual(GameplayState.Playing, controller.CurrentState);
+        Assert.AreEqual(1f, UnityEngine.Time.timeScale);
+    }
+
     [Test]
     public void RestartResetsPuzzleAndLives()
     {
