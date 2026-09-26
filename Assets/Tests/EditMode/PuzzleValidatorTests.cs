@@ -47,5 +47,43 @@ public class PuzzleValidatorTests
         var placed=BuildSolution(p);
         foreach(var v in placed) if(v!=-1) count++;
         Assert.AreEqual(10,count);
+
+        [Test]
+        public void LaunchLevelsHaveStableIdsAndFingerprints()
+        {
+            var fingerprints = new HashSet<string>();
+
+            for (int level = 1; level <= PuzzleRepository.LaunchLevelCount; level++)
+            {
+                var puzzle = PuzzleRepository.Get(level);
+
+                Assert.AreEqual($"P{level:000}", puzzle.id);
+                Assert.AreEqual(PuzzleRepository.GeneratorVersion, puzzle.generatorVersion);
+                Assert.IsNotNull(puzzle.regions);
+                Assert.AreEqual(100, puzzle.regions.Length);
+                Assert.IsNotNull(puzzle.solution);
+                Assert.AreEqual(10, puzzle.solution.Length);
+
+                Assert.IsTrue(PuzzleValidator.IsSolved(
+                    puzzle,
+                    BuildPlacementFromSolution(puzzle.solution)));
+
+                fingerprints.Add(PuzzleRepository.Fingerprint(puzzle));
+            }
+
+            Assert.AreEqual(PuzzleRepository.LaunchLevelCount, fingerprints.Count);
+        }
+
+        private static int[] BuildPlacementFromSolution(int[] solution)
+        {
+            var placed = new int[100];
+            for (int i = 0; i < placed.Length; i++) placed[i] = -1;
+
+            for (int row = 0; row < solution.Length; row++)
+                placed[row * 10 + solution[row]] = 0;
+
+            return placed;
+        }
+
     }
 }
