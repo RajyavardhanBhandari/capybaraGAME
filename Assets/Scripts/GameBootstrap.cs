@@ -35,6 +35,7 @@ namespace CapybaraGame
         private Canvas canvas;
         private Font font;
         private readonly System.Collections.Generic.List<GameObject> spawned = new System.Collections.Generic.List<GameObject>();
+        private int levelSelectPage;
         private readonly Color background = new Color(.965f, .945f, .925f);
         private readonly Color card = new Color(1f, .985f, .965f);
         private readonly Color text = new Color(.18f, .15f, .14f);
@@ -128,7 +129,7 @@ namespace CapybaraGame
             rect.offsetMin = rect.offsetMax = Vector2.zero;
             go.GetComponent<Image>().color = fill;
             var button = go.GetComponent<Button>();
-            button.onClick.AddListener(action);
+            if (action != null) button.onClick.AddListener(action);
 
             var textObject = new GameObject("ButtonText", typeof(Text));
             textObject.transform.SetParent(go.transform, false);
@@ -152,7 +153,7 @@ namespace CapybaraGame
 
             Button(bg.transform, "PLAY", 44, new Color(.52f,.78f,.47f),
                 () => StartLevel(save.unlockedLevel), new Vector2(.08f,.58f), new Vector2(.92f,.68f));
-            Button(bg.transform, "LEVEL SELECT", 28, card, ShowLevelSelect, new Vector2(.08f,.41f), new Vector2(.92f,.47f));
+            Button(bg.transform, "LEVEL SELECT", 28, card, () => { levelSelectPage = Mathf.Max(0, (save.unlockedLevel - 1) / 40); ShowLevelSelect(); }, new Vector2(.08f,.41f), new Vector2(.92f,.47f));
 
             Button(bg.transform, "RULES", 26, card, ShowRules, new Vector2(.08f,.48f), new Vector2(.44f,.55f));
             Button(bg.transform, "SETTINGS", 26, card, ShowSettings, new Vector2(.56f,.48f), new Vector2(.92f,.55f));
@@ -165,13 +166,17 @@ namespace CapybaraGame
             Clear();
             var bg = Panel(canvas.transform, background, Vector2.zero, Vector2.one);
             Label(bg.transform, "LEVEL SELECT", 50, TextAnchor.MiddleCenter, text, new Vector2(.06f,.88f), new Vector2(.94f,.96f));
-            Label(bg.transform, $"COMPLETED  {ProgressionModel.GetCompletedCount(save)} / {LevelCatalog.MaxLevel}", 22, TextAnchor.MiddleCenter, text, new Vector2(.06f,.83f), new Vector2(.94f,.88f));
+            Label(bg.transform, $"COMPLETED  {ProgressionModel.GetCompletedCount(save)} / {LevelCatalog.MaxLevel}    PAGE {levelSelectPage + 1}/{pageCount}", 22, TextAnchor.MiddleCenter, text, new Vector2(.04f,.83f), new Vector2(.96f,.88f));
 
             const int columns = 4;
-            const int visible = 40;
-            for (int i = 0; i < visible; i++)
+            const int pageSize = 40;
+            int pageCount = (LevelCatalog.MaxLevel + pageSize - 1) / pageSize;
+            levelSelectPage = Mathf.Clamp(levelSelectPage, 0, pageCount - 1);
+            int firstLevel = levelSelectPage * pageSize + 1;
+            for (int i = 0; i < pageSize; i++)
             {
-                int level = i + 1;
+                int level = firstLevel + i;
+                if (level > LevelCatalog.MaxLevel) break;
                 int row = i / columns;
                 int col = i % columns;
                 float x0 = .06f + col * .225f;
@@ -185,7 +190,9 @@ namespace CapybaraGame
                 Button(bg.transform, label, 24, fill, unlocked ? (UnityEngine.Events.UnityAction)(() => StartLevel(level)) : null,
                     new Vector2(x0,y0), new Vector2(x1,y1));
             }
-            Button(bg.transform, "BACK", 28, card, ShowHome, new Vector2(.18f,.07f), new Vector2(.82f,.14f));
+            if (levelSelectPage > 0) Button(bg.transform, "‹ PREVIOUS", 22, card, () => { levelSelectPage--; ShowLevelSelect(); }, new Vector2(.06f,.07f), new Vector2(.30f,.14f));
+            if (levelSelectPage < pageCount - 1) Button(bg.transform, "NEXT ›", 22, card, () => { levelSelectPage++; ShowLevelSelect(); }, new Vector2(.70f,.07f), new Vector2(.94f,.14f));
+            Button(bg.transform, "HOME", 22, card, ShowHome, new Vector2(.36f,.07f), new Vector2(.64f,.14f));
         }
 
         private void ShowRules()
