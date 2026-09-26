@@ -1,34 +1,94 @@
-# Capybara Puzzle Game
+# Capybara Game
 
-Official source-of-truth repository for the Capybara Puzzle Game.
+A cute mobile puzzle game built around four simple rules:
 
-## Phase 0 status
+1. One character per colored region.
+2. One character per row.
+3. One character per column.
+4. Characters cannot touch, including diagonally.
 
-Phase 0 establishes the implementation-ready product, design, technical, economy, analytics, monetization, art/audio, and launch specifications.
+## Phase 1 vertical slice
 
-**Core principle:** Simple puzzle. Deep ecosystem.
+The repository now contains a playable Unity vertical slice with:
 
-The core puzzle is intentionally kept simple. Depth comes from progression, collection, competition, personalization, presentation, and polish.
+- Home screen
+- Progression levels
+- 10×10 puzzle board
+- Deterministic puzzle content
+- 3 lives per attempt
+- Place/remove interaction
+- Invalid placement life loss
+- Solve/fail results
+- Coin rewards
+- Hint / reveal / extra-life economy hooks
+- Character selection
+- Shop
+- Daily Puzzle shell
+- Weekly leaderboard shell
+- Profile/settings shell
+- Local persistence
+- Edit-mode puzzle tests
 
-See `00_DOCUMENTATION/00_MASTER_PLAN/PHASE_0_AUDIT.md` for the audit and `MASTER_GAME_PLAN.md` for the consolidated Game Bible.
+## Unity
 
-## Launch scope
+Pinned editor:
 
-- Unity + C#
-- iOS first, Android architecture from day one
-- 500 progression levels
-- 5 launch animals: Capybara, Cat, Dog, Penguin, Panda
-- 3 lives per normal puzzle
-- Coins, Lives, Treats
-- Hard Challenge every 10th level
-- Golden Challenge
-- Daily Puzzle
-- Weekly leaderboard
-- No premium currency at launch
-- No energy system
-- No pay-to-win
-- No special puzzle tiles or alternate puzzle rules at launch
+Unity 6000.3.16f1, Unity 6.3 LTS
 
-## Repository structure
+Unity 6.3 LTS is the production baseline for this new project.
 
-See `00_DOCUMENTATION/` for all Phase 0 specifications.
+Open the repository in Unity Hub, allow packages to resolve, then open:
+
+Assets/Scenes/Main.unity
+
+The game bootstraps its Phase 1 UI at runtime, so no prefab setup is required for the vertical slice.
+
+## Project structure
+
+Assets/Scripts/Core
+Domain types and character catalog.
+
+Assets/Scripts/Puzzle
+Puzzle data and four-rule validator.
+
+Assets/Scripts/Characters
+Character selection.
+
+Assets/Scripts/Services
+Local persistence.
+
+Assets/Scripts/GameBootstrap.cs
+Phase 1 runtime UI and gameplay flow.
+
+Assets/Tests/EditMode
+Automated puzzle tests.
+
+00_DOCUMENTATION
+Product, UX, technical, art and Phase 1 specifications.
+
+## Current status
+
+### Completed
+- Phase 0 product foundation
+- Phase 1 design/specification
+- Phase 1 playable vertical slice implementation
+
+### Not yet production-ready
+- Final character artwork
+- Final audio/haptics assets
+- 500 curated production puzzles
+- Authentication/backend
+- Server-authoritative Daily
+- Real leaderboard
+- Ads
+- IAP
+- Production analytics
+- App Store / Play Store configuration
+
+Those systems are deliberately deferred behind the documented architecture so they can be added without changing the core puzzle rules.
+
+## Design principle
+
+Simple puzzle. Deep ecosystem.
+
+Characters are cosmetic. Competitive systems cannot provide gameplay advantages through purchases or ads.
