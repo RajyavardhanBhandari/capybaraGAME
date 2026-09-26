@@ -1,25 +1,25 @@
 # Phase 2 Implementation Status
+## Implemented
+- General deterministic RNG and seed derivation.
+- Expanded PuzzleDefinition metadata model.
+- Four locked rules and region-map validation.
+- Connected irregular-region generation.
+- Backtracking/MRV solver with solution counting up to a caller-defined limit.
+- Solver metrics for difficulty analysis.
+- Configurable 0-100 difficulty scoring and bands.
+- Structural fingerprinting and similarity foundation.
+- JSON puzzle serialization.
+- Daily-compatible deterministic seed derivation.
+- General 4x4 through 7x7 generator.
+- Production repository foundation for 500 levels and every-tenth Hard Challenge metadata.
+- Development-only generator window.
+- Expanded EditMode test suite.
 
-## Current state
+## Not executed in this environment
+- Unity EditMode run.
+- Device performance profiling.
+- Human playtest calibration.
+- Final curation of 500 production puzzles.
+- Backend Daily/leaderboard authority.
 
-Phase 2 implementation has started and the puzzle repository has been upgraded from the Phase 1 three-pattern prototype to a deterministic seeded generator capable of producing the planned 500 level IDs.
-
-Implemented:
-- deterministic seeded solution generation
-- non-touching solution placement generation
-- connected region generation using multi-source expansion
-- stable P001–P500 IDs
-- stable seeds
-- hard-challenge metadata every tenth level
-- estimated difficulty metadata
-- generator versioning
-- deterministic puzzle fingerprint generation
-
-Not yet production-verified:
-- mathematical uniqueness of every generated puzzle
-- final human curation/playtesting
-- Unity EditMode execution
-- device performance/input validation
-- server-authoritative Daily/Leaderboard systems
-
-The remaining items are deliberately explicit rather than being marked complete by assumption.
+These require a local Unity 6.3 editor/device workflow.
