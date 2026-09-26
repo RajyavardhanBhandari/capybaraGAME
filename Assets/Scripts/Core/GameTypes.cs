@@ -32,7 +32,7 @@ namespace CapybaraGame.Core
     }
     [Serializable] public sealed class LocalSave
     {
-        public int unlockedLevel=1; public int coins=750; public int treats=0; public int activeCharacter=(int)CharacterId.Capybara; public bool sound=true; public bool haptics=true; public bool reducedMotion=false; public List<int> completedLevels=new List<int>();
+        public int unlockedLevel=1; public int currentLevel=1; public int coins=750; public int treats=0; public int activeCharacter=(int)CharacterId.Capybara; public bool sound=true; public bool haptics=true; public bool reducedMotion=false; public List<int> completedLevels=new List<int>();
     }
     public static class CharacterCatalog
     {
