@@ -138,7 +138,7 @@ namespace CapybaraGame
             Label(bg.transform, "A tiny puzzle. A big little world.", 30, TextAnchor.MiddleCenter, new Color(.38f,.34f,.32f), new Vector2(.08f,.80f), new Vector2(.92f,.87f), Vector2.zero, Vector2.zero);
 
             var stats = Panel(bg.transform, card, new Vector2(.07f,.69f), new Vector2(.93f,.79f), Vector2.zero, Vector2.zero);
-            Label(stats.transform, $"Level {save.unlockedLevel}     •     🪙 {save.coins}", 34, TextAnchor.MiddleCenter, text, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            Label(stats.transform, $"Level {save.unlockedLevel}     •     Coins {save.coins}", 34, TextAnchor.MiddleCenter, text, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
 
             var play = Button(bg.transform, "PLAY", 44, new Color(.52f,.78f,.47f), () => StartLevel(save.unlockedLevel), 120);
             var pr = play.GetComponent<RectTransform>(); pr.anchorMin = new Vector2(.08f,.52f); pr.anchorMax = new Vector2(.92f,.62f); pr.offsetMin = pr.offsetMax = Vector2.zero;
@@ -194,7 +194,7 @@ namespace CapybaraGame
                 CreateCell(board.transform, row, col);
             }
 
-            var hint = Button(bg.transform, "💡 HINT  •  100", 24, card, () => SpendHint(daily), 88);
+            var hint = Button(bg.transform, "HINT  •  100", 24, card, () => SpendHint(daily), 88);
             var hr = hint.GetComponent<RectTransform>(); hr.anchorMin = new Vector2(.06f,.19f); hr.anchorMax = new Vector2(.30f,.25f); hr.offsetMin = hr.offsetMax = Vector2.zero;
             var reveal = Button(bg.transform, "REVEAL  •  175", 24, card, () => RevealCell(daily), 88);
             var rr = reveal.GetComponent<RectTransform>(); rr.anchorMin = new Vector2(.38f,.19f); rr.anchorMax = new Vector2(.62f,.25f); rr.offsetMin = rr.offsetMax = Vector2.zero;
