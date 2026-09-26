@@ -149,7 +149,7 @@ namespace CapybaraGame
             var bg = Panel(canvas.transform, background, Vector2.zero, Vector2.one);
             Label(bg.transform, "CAPYBARA", 64, TextAnchor.MiddleCenter, text, new Vector2(.08f,.86f), new Vector2(.92f,.97f));
             Label(bg.transform, "A tiny puzzle. A big little world.", 28, TextAnchor.MiddleCenter, text, new Vector2(.08f,.80f), new Vector2(.92f,.86f));
-            Label(bg.transform, $"LEVEL {save.unlockedLevel}   •   COINS {save.coins}", 30, TextAnchor.MiddleCenter, text, new Vector2(.08f,.72f), new Vector2(.92f,.79f));
+            Label(bg.transform, $"LEVEL {save.currentLevel}   •   UNLOCKED {save.unlockedLevel}   •   COINS {save.coins}", 26, TextAnchor.MiddleCenter, text, new Vector2(.04f,.72f), new Vector2(.96f,.79f));
 
             Button(bg.transform, "PLAY", 44, new Color(.52f,.78f,.47f),
                 () => StartLevel(save.unlockedLevel), new Vector2(.08f,.58f), new Vector2(.92f,.68f));
@@ -217,7 +217,9 @@ namespace CapybaraGame
 
         private void StartLevel(int level)
         {
-            if (!ProgressionService.IsUnlocked(save, level)) level = save.unlockedLevel;
+            if (!ProgressionModel.IsUnlocked(save, level)) level = save.unlockedLevel;
+            save.currentLevel = level;
+            SaveService.Save(save);
             gameplay.LoadLevel(level, characters.Active);
             BuildGameplay();
         }
