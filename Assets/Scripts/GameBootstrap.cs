@@ -2,6 +2,8 @@ using CapybaraGame.Audio;
 using CapybaraGame.Characters;
 using CapybaraGame.Core;
 using CapybaraGame.Gameplay;
+using CapybaraGame.Levels;
+using CapybaraGame.Progression;
 using CapybaraGame.Platform;
 using CapybaraGame.Services;
 using CapybaraGame.UI;
@@ -150,11 +152,40 @@ namespace CapybaraGame
 
             Button(bg.transform, "PLAY", 44, new Color(.52f,.78f,.47f),
                 () => StartLevel(save.unlockedLevel), new Vector2(.08f,.58f), new Vector2(.92f,.68f));
+            Button(bg.transform, "LEVEL SELECT", 28, card, ShowLevelSelect, new Vector2(.08f,.41f), new Vector2(.92f,.47f));
 
             Button(bg.transform, "RULES", 26, card, ShowRules, new Vector2(.08f,.48f), new Vector2(.44f,.55f));
             Button(bg.transform, "SETTINGS", 26, card, ShowSettings, new Vector2(.56f,.48f), new Vector2(.92f,.55f));
             Label(bg.transform, "Progression is local and works offline.", 22, TextAnchor.MiddleCenter, text, new Vector2(.08f,.33f), new Vector2(.92f,.39f));
             Label(bg.transform, $"Treats: {save.treats}", 28, TextAnchor.MiddleCenter, text, new Vector2(.08f,.25f), new Vector2(.92f,.32f));
+        }
+
+        private void ShowLevelSelect()
+        {
+            Clear();
+            var bg = Panel(canvas.transform, background, Vector2.zero, Vector2.one);
+            Label(bg.transform, "LEVEL SELECT", 50, TextAnchor.MiddleCenter, text, new Vector2(.06f,.88f), new Vector2(.94f,.96f));
+            Label(bg.transform, $"COMPLETED  {ProgressionModel.GetCompletedCount(save)} / {LevelCatalog.MaxLevel}", 22, TextAnchor.MiddleCenter, text, new Vector2(.06f,.83f), new Vector2(.94f,.88f));
+
+            const int columns = 4;
+            const int visible = 40;
+            for (int i = 0; i < visible; i++)
+            {
+                int level = i + 1;
+                int row = i / columns;
+                int col = i % columns;
+                float x0 = .06f + col * .225f;
+                float x1 = x0 + .205f;
+                float y1 = .76f - row * .075f;
+                float y0 = y1 - .062f;
+                bool unlocked = ProgressionModel.IsUnlocked(save, level);
+                bool completed = ProgressionModel.IsCompleted(save, level);
+                string label = completed ? "✓ " + level : unlocked ? level.ToString() : "🔒";
+                Color fill = completed ? new Color(.55f,.78f,.58f) : unlocked ? card : new Color(.88f,.87f,.84f);
+                Button(bg.transform, label, 24, fill, unlocked ? (UnityEngine.Events.UnityAction)(() => StartLevel(level)) : null,
+                    new Vector2(x0,y0), new Vector2(x1,y1));
+            }
+            Button(bg.transform, "BACK", 28, card, ShowHome, new Vector2(.18f,.07f), new Vector2(.82f,.14f));
         }
 
         private void ShowRules()
@@ -190,7 +221,7 @@ namespace CapybaraGame
             var bg = Panel(canvas.transform, background, Vector2.zero, Vector2.one);
             var puzzle = gameplay.Puzzle;
 
-            Button(bg.transform, "←", 32, card, ShowHome, new Vector2(.05f,.92f), new Vector2(.16f,.98f));
+            Button(bg.transform, "←", 32, card, ShowLevelSelect, new Vector2(.05f,.92f), new Vector2(.16f,.98f));
             Label(bg.transform, $"LEVEL {gameplay.LevelId}", 38, TextAnchor.MiddleCenter, text, new Vector2(.20f,.92f), new Vector2(.80f,.98f));
             Button(bg.transform, "Ⅱ", 28, card, PauseGame, new Vector2(.84f,.92f), new Vector2(.95f,.98f));
 
@@ -266,7 +297,7 @@ namespace CapybaraGame
         {
             audioService.Play(SfxType.Completion);
             haptics.Play(HapticType.Celebration);
-            ProgressionService.ApplyCompletion(save, gameplay.LevelId, reward);
+            ProgressionModel.ApplyCompletion(save, gameplay.LevelId, reward);
             gameplay.GrantReward();
             ShowResult(true, reward);
         }
@@ -290,7 +321,7 @@ namespace CapybaraGame
             if (solved)
             {
                 Button(bg.transform, gameplay.LevelId < 500 ? "CONTINUE" : "HOME", 36, new Color(.52f,.78f,.47f),
-                    () => { gameplay.Advance(); if (gameplay.LevelId < 500) StartLevel(gameplay.LevelId + 1); else ShowHome(); },
+                    () => { gameplay.Advance(); int next = LevelCatalog.NextLevel(gameplay.LevelId); if (next > 0 && ProgressionModel.IsUnlocked(save, next)) StartLevel(next); else ShowLevelSelect(); },
                     new Vector2(.12f,.30f), new Vector2(.88f,.39f));
             }
             else
