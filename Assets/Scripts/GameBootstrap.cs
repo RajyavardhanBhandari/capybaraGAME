@@ -64,7 +64,7 @@ namespace CapybaraGame
             scaler.referenceResolution = new Vector2(1080, 1920);
             scaler.matchWidthOrHeight = 0.5f;
 
-            font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            font = Resources.GetBuiltinResource<Font>("Arial.ttf");
 
             if (EventSystem.current == null)
             {
@@ -176,7 +176,7 @@ namespace CapybaraGame
         {
             var bg = Panel(canvas.transform, background, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             Label(bg.transform, daily ? "DAILY PUZZLE" : $"LEVEL {puzzle.id.Replace("P","")}", 38, TextAnchor.MiddleCenter, text, new Vector2(.12f,.92f), new Vector2(.88f,.98f), Vector2.zero, Vector2.zero);
-            Label(bg.transform, $"Lives  {state.livesRemaining}     •     {CharacterCatalog.Name(characters.Active)}", 28, TextAnchor.MiddleCenter, text, new Vector2(.08f,.86f), new Vector2(.92f,.92f), Vector2.zero, Vector2.zero);
+            Label(bg.transform, $"Lives  {state.livesRemaining}     •     {CharacterCatalog.Name(characters.Active)}     •     {puzzle.difficultyBand}", 25, TextAnchor.MiddleCenter, text, new Vector2(.04f,.85f), new Vector2(.96f,.92f), Vector2.zero, Vector2.zero);\n            Label(bg.transform, "1 per region  •  1 per row  •  1 per column  •  no touching", 20, TextAnchor.MiddleCenter, new Color(.38f,.34f,.32f), new Vector2(.05f,.80f), new Vector2(.95f,.85f), Vector2.zero, Vector2.zero);
 
             var board = new GameObject("Board", typeof(GridLayoutGroup));
             board.transform.SetParent(bg.transform, false);
