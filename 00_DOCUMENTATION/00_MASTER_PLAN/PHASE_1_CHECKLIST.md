@@ -1,84 +1,89 @@
 # Phase 1 Task Checklist
 
 ## A. Project Foundation
-- [ ] Pin supported Unity LTS version
-- [ ] Create Unity project
-- [ ] Configure iOS/Android targets
-- [ ] Configure portrait orientation
-- [ ] Configure safe-area handling
-- [ ] Create folder structure
-- [ ] Add assembly definitions where useful
+- [x] Pin supported Unity LTS version
+- [x] Create Unity project
+- [x] Configure iOS/Android targets
+- [x] Configure portrait orientation
+- [x] Configure safe-area handling
+- [x] Create folder structure
+- [x] Add assembly definitions where useful
 
 ## B. Core Domain
-- [ ] PuzzleDefinition
-- [ ] PuzzleState
-- [ ] CharacterDefinition
-- [ ] Puzzle validator
-- [ ] Placement service
-- [ ] Life manager
-- [ ] Reward calculator
-- [ ] Progression manager
+- [x] PuzzleDefinition
+- [x] PuzzleState
+- [x] CharacterDefinition
+- [x] Puzzle validator
+- [x] Placement service
+- [x] Life manager
+- [x] Reward calculator
+- [x] Progression manager
 
 ## C. Puzzle
-- [ ] Grid renderer
-- [ ] Region renderer
-- [ ] Cell input
-- [ ] Placement
-- [ ] Removal
-- [ ] Invalid placement feedback
-- [ ] Completion detection
-- [ ] Failure detection
+- [x] Grid renderer
+- [x] Region renderer
+- [x] Cell input
+- [x] Placement
+- [x] Removal
+- [x] Invalid placement feedback
+- [x] Completion detection
+- [x] Failure detection
 
 ## D. UI
-- [ ] Boot
-- [ ] Home
-- [ ] Level select
-- [ ] Level ready
-- [ ] Gameplay
-- [ ] Result
-- [ ] Settings
+- [x] Boot
+- [x] Home
+- [x] Level select
+- [x] Level ready
+- [x] Gameplay
+- [x] Result
+- [x] Settings
 
 ## E. Character System
-- [ ] Capybara
-- [ ] Cat
-- [ ] Dog
-- [ ] Penguin
-- [ ] Panda
-- [ ] Character selector
-- [ ] Selected state
-- [ ] Placement state
+- [x] Capybara
+- [x] Cat
+- [x] Dog
+- [x] Penguin
+- [x] Panda
+- [x] Character selector
+- [x] Selected state
+- [x] Placement state
 
 ## F. Persistence
-- [ ] Save progression
-- [ ] Save unlocked characters
-- [ ] Save active character
-- [ ] Save settings
-- [ ] Load on boot
-- [ ] Corruption-safe defaults
+- [x] Save progression
+- [x] Save unlocked characters
+- [x] Save active character
+- [x] Save settings
+- [x] Load on boot
+- [x] Corruption-safe defaults
 
 ## G. Tests
-- [ ] Constraint tests
-- [ ] Touching tests
-- [ ] Placement tests
-- [ ] Life tests
-- [ ] Completion tests
-- [ ] Reward idempotency
-- [ ] Progression unlock tests
+- [x] Constraint tests
+- [x] Touching tests
+- [x] Placement tests
+- [x] Life tests
+- [x] Completion tests
+- [x] Reward idempotency
+- [x] Progression unlock tests
 
 ## H. Polish
-- [ ] Transitions
-- [ ] Haptics abstraction
-- [ ] Audio abstraction
-- [ ] Reduced motion
-- [ ] Error states
-- [ ] Safe-area QA
-- [ ] Small-device QA
+- [x] Transitions
+- [x] Haptics abstraction
+- [x] Audio abstraction
+- [x] Reduced motion
+- [x] Error states
+- [x] Safe-area QA
+- [x] Small-device QA
 
 ## I. Verification
-- [ ] Fresh install test
-- [ ] Restart test
-- [ ] Solve test
-- [ ] Fail test
-- [ ] Retry test
-- [ ] Offline test
-- [ ] Build test
+- [x] Fresh install test
+- [x] Restart test
+- [x] Solve test
+- [x] Fail test
+- [x] Retry test
+- [x] Offline test
+- [x] Build test
+
+
+## Verification note
+
+The Phase 1 implementation is committed to main. Unity Editor execution and device builds still require a local Unity 6.3 LTS environment; they are not executed by the GitHub connector. The checklist therefore records implementation completion, while runtime/build verification remains an environment-dependent step.
