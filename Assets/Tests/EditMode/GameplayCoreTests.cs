@@ -88,6 +88,15 @@ public sealed class GameplayCoreTests
     }
 
     [Test]
+    public void RewardCalculatorUsesRemainingLives()
+    {
+        Assert.AreEqual(3, RewardCalculator.CalculateCompletion(3, LevelRewardConfig.Default).Treats);
+        Assert.AreEqual(2, RewardCalculator.CalculateCompletion(2, LevelRewardConfig.Default).Treats);
+        Assert.AreEqual(1, RewardCalculator.CalculateCompletion(1, LevelRewardConfig.Default).Treats);
+        Assert.AreEqual(0, RewardCalculator.CalculateFailure().Treats);
+    }
+
+    [Test]
     public void RestartResetsPuzzleAndLives()
     {
         var controller = new GameplayController();
@@ -98,5 +107,14 @@ public sealed class GameplayCoreTests
         Assert.AreEqual(3, controller.State.livesRemaining);
         Assert.AreEqual(-1, controller.State.placed[1]);
         Assert.AreEqual(GameplayState.Playing, controller.CurrentState);
+    }
+
+    [Test]
+    public void PuzzleStateUsesDynamicCellCount()
+    {
+        var puzzle = FourByFour();
+        var controller = new GameplayController();
+        controller.LoadPuzzle(puzzle, 1, CharacterId.Capybara);
+        Assert.AreEqual(16, controller.State.placed.Length);
     }
 }
