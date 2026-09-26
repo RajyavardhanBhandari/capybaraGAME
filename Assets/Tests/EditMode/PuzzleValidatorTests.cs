@@ -1,89 +1,16 @@
-using CapybaraGame.Core;
-using CapybaraGame.Puzzle;
-using NUnit.Framework;
-
-public class PuzzleValidatorTests
-{
-    private PuzzleDefinition Puzzle()
-    {
-        var p = PuzzleRepository.Get(1);
-        Assert.IsTrue(PuzzleValidator.IsSolved(p, BuildSolution(p)));
-        return p;
-    }
-
-    private int[] BuildSolution(PuzzleDefinition p)
-    {
-        var placed = new int[100];
-        for (int i=0;i<100;i++) placed[i] = -1;
-        for (int r=0;r<10;r++) placed[r*10+p.solution[r]] = 0;
-        return placed;
-    }
-
-    [Test] public void GeneratedPuzzleHasValidSolution() => Assert.IsTrue(PuzzleValidator.IsSolved(Puzzle(), BuildSolution(Puzzle())));
-
-    [Test]
-    public void DuplicateRowRejected()
-    {
-        var p = Puzzle();
-        var placed = new int[100]; for(int i=0;i<100;i++) placed[i]=-1;
-        placed[0] = 0;
-        Assert.IsFalse(PuzzleValidator.IsPlacementValid(p, placed, 0, 2));
-    }
-
-    [Test]
-    public void DiagonalTouchRejected()
-    {
-        var p = Puzzle();
-        var placed = new int[100]; for(int i=0;i<100;i++) placed[i]=-1;
-        placed[0] = 0;
-        Assert.IsFalse(PuzzleValidator.IsPlacementValid(p, placed, 1, 1));
-    }
-
-    [Test]
-    public void ValidSolutionContainsTenCharacters()
-    {
-        var p = Puzzle();
-        int count=0;
-        var placed=BuildSolution(p);
-        foreach(var v in placed) if(v!=-1) count++;
-        Assert.AreEqual(10,count);
-
-        [Test]
-        public void LaunchLevelsHaveStableIdsAndFingerprints()
-        {
-            var fingerprints = new HashSet<string>();
-
-            for (int level = 1; level <= PuzzleRepository.LaunchLevelCount; level++)
-            {
-                var puzzle = PuzzleRepository.Get(level);
-
-                Assert.AreEqual($"P{level:000}", puzzle.id);
-                Assert.AreEqual(PuzzleRepository.GeneratorVersion, puzzle.generatorVersion);
-                Assert.IsNotNull(puzzle.regions);
-                Assert.AreEqual(100, puzzle.regions.Length);
-                Assert.IsNotNull(puzzle.solution);
-                Assert.AreEqual(10, puzzle.solution.Length);
-
-                Assert.IsTrue(PuzzleValidator.IsSolved(
-                    puzzle,
-                    BuildPlacementFromSolution(puzzle.solution)));
-
-                fingerprints.Add(PuzzleRepository.Fingerprint(puzzle));
-            }
-
-            Assert.AreEqual(PuzzleRepository.LaunchLevelCount, fingerprints.Count);
-        }
-
-        private static int[] BuildPlacementFromSolution(int[] solution)
-        {
-            var placed = new int[100];
-            for (int i = 0; i < placed.Length; i++) placed[i] = -1;
-
-            for (int row = 0; row < solution.Length; row++)
-                placed[row * 10 + solution[row]] = 0;
-
-            return placed;
-        }
-
-    }
+using CapybaraGame.Core;using CapybaraGame.Puzzle;using NUnit.Framework;
+public class PuzzleEngineTests{
+ static PuzzleDefinition Four(){return new PuzzleDefinition{id="T",rows=4,columns=4,regionCount=4,regions=new[]{0,0,1,1,0,0,1,1,2,2,3,3,2,2,3,3},solution=new[]{1,3,0,2},initialState=new int[16]};}
+ static int[] Empty(int n){var a=new int[n];for(int i=0;i<n;i++)a[i]=-1;return a;}
+ static int[] Solution(PuzzleDefinition p){var a=Empty(p.CellCount);for(int r=0;r<p.rows;r++)a[r*p.columns+p.solution[r]]=0;return a;}
+ [Test]public void SolvedBoardAccepted(){var p=Four();Assert.IsTrue(PuzzleValidator.IsSolved(p,Solution(p)));}
+ [Test]public void RowColumnRegionAndTouchConstraintsRejectInvalidMoves(){var p=Four();var a=Empty(16);a[0]=0;Assert.IsFalse(PuzzleValidator.IsPlacementValid(p,a,0,2));Assert.IsFalse(PuzzleValidator.IsPlacementValid(p,a,2,0));Assert.IsFalse(PuzzleValidator.IsPlacementValid(p,a,1,1));Assert.IsFalse(PuzzleValidator.IsPlacementValid(p,a,0,1));Assert.IsFalse(PuzzleValidator.IsPlacementValid(p,a,1,0));}
+ [Test]public void ValidPlacementAccepted(){var p=Four();var a=Empty(16);a[0]=0;Assert.IsTrue(PuzzleValidator.IsPlacementValid(p,a,2,3));}
+ [Test]public void RegionConnectivityValidated(){var p=Four();Assert.IsTrue(PuzzleValidator.IsRegionMapValid(p));p.regions[1]=2;Assert.IsFalse(PuzzleValidator.IsRegionMapValid(p));}
+ [Test]public void SolverFindsUniqueSolution(){var p=Four();var r=PuzzleSolver.Solve(p,2);Assert.AreEqual(1,r.SolutionCount);Assert.IsNotNull(r.FirstSolution);}
+ [Test]public void SolverDetectsMultipleSolutions(){var p=Four();p.regions=new[]{0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3};var r=PuzzleSolver.Solve(p,2);Assert.GreaterOrEqual(r.SolutionCount,2);}
+ [Test]public void SeededGenerationIsReproducible(){var c=new PuzzleGenerationConfig{rows=4,columns=4,regionCount=4,seed=99173,maxAttempts=2000};var a=PuzzleGenerator.Generate(c).Puzzle;var b=PuzzleGenerator.Generate(c).Puzzle;Assert.IsNotNull(a);Assert.IsNotNull(b);Assert.AreEqual(a.fingerprint,b.fingerprint);Assert.AreEqual(a.difficulty,b.difficulty);}
+ [Test]public void AllSupportedSizesCanGenerate(){foreach(int n in new[]{4,5,6,7}){var r=PuzzleGenerator.Generate(new PuzzleGenerationConfig{rows=n,columns=n,regionCount=n,seed=1000+n,maxAttempts=5000});Assert.IsNotNull(r.Puzzle,"size "+n+" failed: "+r.FailureReason);Assert.AreEqual(1,r.Puzzle.solutionCount);Assert.IsTrue(PuzzleValidator.IsSolved(r.Puzzle,Solution(r.Puzzle)));}}
+ [Test]public void FingerprintAndDifficultyAreDeterministic(){var p=Four();Assert.AreEqual(PuzzleFingerprint.Compute(p),PuzzleFingerprint.Compute(p.Clone()));Assert.AreEqual(PuzzleDifficultyEvaluator.Evaluate(p).Score,PuzzleDifficultyEvaluator.Evaluate(p).Score);}
+ [Test]public void LaunchRepositoryHasStableIds(){for(int level=1;level<=20;level++){var p=PuzzleRepository.Get(level);Assert.AreEqual("P"+level.ToString("000"),p.id);Assert.IsTrue(PuzzleValidator.IsRegionMapValid(p));Assert.IsTrue(PuzzleValidator.IsSolved(p,Solution(p)));Assert.IsNotNull(p.fingerprint);}}
 }

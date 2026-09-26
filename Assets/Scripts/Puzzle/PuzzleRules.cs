@@ -1,0 +1,1 @@
+using System;namespace CapybaraGame.Puzzle{public static class PuzzleRules{public const int StartingLives=3;public static bool AreAdjacent(int ar,int ac,int br,int bc)=>Math.Abs(ar-br)<=1&&Math.Abs(ac-bc)<=1&&(ar!=br||ac!=bc);}}

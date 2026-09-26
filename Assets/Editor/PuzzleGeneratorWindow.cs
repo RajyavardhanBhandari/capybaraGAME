@@ -1,0 +1,5 @@
+#if UNITY_EDITOR
+using UnityEditor;using UnityEngine;using CapybaraGame.Puzzle;using CapybaraGame.Core;
+namespace CapybaraGame.Editor{public sealed class PuzzleGeneratorWindow:EditorWindow{int size=5,seed=1,count=10;PuzzleDifficultyBand band=PuzzleDifficultyBand.Medium;[MenuItem("Capybara/Puzzle Engine/Generator")]static void Open(){GetWindow<PuzzleGeneratorWindow>("Puzzle Generator");}
+void OnGUI(){size=EditorGUILayout.IntSlider("Grid Size",size,4,7);seed=EditorGUILayout.IntField("Seed",seed);count=EditorGUILayout.IntSlider("Candidates",count,1,1000);band=(PuzzleDifficultyBand)EditorGUILayout.EnumPopup("Target Difficulty",band);if(GUILayout.Button("Generate Candidates")){int ok=0;for(int i=0;i<count;i++){var r=PuzzleGenerator.Generate(new PuzzleGenerationConfig{rows=size,columns=size,regionCount=size,seed=seed+i,maxAttempts=5000,targetBand=band});if(r.Puzzle!=null)ok++;Debug.Log(r.Puzzle==null?"Rejected seed "+(seed+i)+": "+r.FailureReason:"Accepted "+r.Puzzle.fingerprint+" score="+r.Puzzle.difficulty); }Debug.Log("Accepted "+ok+"/"+count);}}}}
+#endif

@@ -1,0 +1,7 @@
+using System;using System.Collections.Generic;using CapybaraGame.Core;
+namespace CapybaraGame.Puzzle{
+public static class ProductionPuzzleRepository{
+static readonly Dictionary<int,PuzzleDefinition> cache=new Dictionary<int,PuzzleDefinition>();
+public static PuzzleDefinition Get(int level){if(level<1||level>500)throw new ArgumentOutOfRangeException(nameof(level));if(cache.TryGetValue(level,out var p))return p.Clone();int size=level<=20?4:level<=100?5:level<=300?6:7;var target=level%10==0?PuzzleDifficultyBand.Hard:(level%4==0?PuzzleDifficultyBand.Medium:PuzzleDifficultyBand.Easy);var result=PuzzleGenerator.Generate(new PuzzleGenerationConfig{rows=size,columns=size,regionCount=size,seed=PuzzleSeed.ForLevel(level),generationVersion=PuzzleRepository.GeneratorVersion,maxAttempts=5000,targetBand=target});if(result.Puzzle==null){result=PuzzleGenerator.Generate(new PuzzleGenerationConfig{rows=size,columns=size,regionCount=size,seed=PuzzleSeed.ForLevel(level),generationVersion=PuzzleRepository.GeneratorVersion,maxAttempts=5000});}if(result.Puzzle==null)throw new InvalidOperationException("Production puzzle generation failed for level "+level+": "+result.FailureReason);result.Puzzle.id="P"+level.ToString("000");result.Puzzle.isHardChallenge=level%10==0;cache[level]=result.Puzzle;return result.Puzzle.Clone();}
+public static void ClearCache()=>cache.Clear();
+}}
