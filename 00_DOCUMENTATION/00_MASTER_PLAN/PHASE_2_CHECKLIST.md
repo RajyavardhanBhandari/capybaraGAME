@@ -1,35 +1,34 @@
 # Phase 2 Checklist — Production Puzzle & Content Foundation
-
-## Goal
-Replace the Phase 1 prototype puzzle repository with a deterministic, scalable content foundation suitable for the planned 500-level launch set.
-
-## Puzzle generation
+## Core engine
 - [x] Deterministic seeded generation
-- [x] Generate 500 distinct level seeds
-- [x] Generate non-touching 10×10 solution placements
-- [x] Generate connected colored regions around solution anchors
-- [x] Preserve one character per row/column/region constraints
-- [x] Preserve hard-challenge cadence every 10 levels
-- [x] Add generator versioning
-- [x] Add estimated difficulty metadata
-- [ ] Prove uniqueness of every generated puzzle
-- [ ] Human/playtest curation of the final 500 levels
+- [x] 4x4, 5x5, 6x6 and 7x7 support
+- [x] Connected irregular regions
+- [x] Four-rule validator
+- [x] Solver with solution counting
+- [x] Uniqueness filtering
+- [x] Configurable difficulty score and bands
+- [x] Structural fingerprint and similarity foundation
+- [x] Generator versioning
+- [x] JSON serialization
+- [x] Daily-compatible seed derivation
+- [x] Production repository foundation
+- [x] Developer generator tool
+- [x] Automated tests added
 
-## Content pipeline
-- [x] Stable puzzle IDs P001–P500
-- [x] Stable seed per level
-- [x] Difficulty bands
-- [x] Fingerprint support
-- [ ] Curated production puzzle manifest
-- [ ] Golden Challenge puzzle pool
-- [ ] Daily puzzle server seed contract
+## Content
+- [x] Stable P001-P500 identifiers
+- [x] Stable level seeds
+- [x] Hard Challenge metadata every 10th level
+- [ ] Final 500-puzzle curation
+- [ ] Human playtest calibration
+- [ ] Golden Challenge pool
+- [ ] Server-authoritative Daily contract
 
-## Quality
-- [x] Keep generation deterministic across runs
-- [x] Keep Phase 1 gameplay API compatible
-- [ ] Run Unity EditMode tests
-- [ ] Device/playtest validation
-- [ ] Performance profiling
+## Verification
+- [ ] Run Unity EditMode tests in Unity 6.3
+- [ ] Run 100/1,000/10,000 candidate stress passes in Editor where practical
+- [ ] Profile generation and solver performance
+- [ ] Device/input validation
+- [ ] Human difficulty calibration
 
-## Phase boundary
-Phase 2 is not considered production-complete until uniqueness, curation, Unity test execution, and device playtesting are completed.
+Phase 2 code foundation is implemented; production content verification remains an explicit QA step rather than an assumed pass.
