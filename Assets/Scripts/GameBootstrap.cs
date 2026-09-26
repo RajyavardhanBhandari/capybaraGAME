@@ -220,7 +220,7 @@ namespace CapybaraGame
 
         private void OnGameplayEvent(GameplayEvent e)
         {
-            if (e.Type == GameplayEventType.MoveCorrect || e.Type == GameplayEventType.CharacterPlaced)
+            if (e.Type == GameplayEventType.MoveCorrect)
             {
                 audioService.Play(SfxType.Placement);
                 haptics.Play(HapticType.Light);
@@ -239,7 +239,7 @@ namespace CapybaraGame
             }
             else if (e.Type == GameplayEventType.LifeLost)
             {
-                audioService.Play(SfxType.LifeLost);
+                // The invalid-move cue already communicates the mistake; this event remains available for future UI analytics.
             }
         }
 
