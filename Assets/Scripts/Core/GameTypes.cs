@@ -76,7 +76,7 @@ namespace CapybaraGame.Core
             switch (id)
             {
                 case CharacterId.Capybara: return "C";
-                case CharacterId.Cat: return "🐱";
+                case CharacterId.Cat: return "K";
                 case CharacterId.Dog: return "D";
                 case CharacterId.Penguin: return "P";
                 default: return "B";
