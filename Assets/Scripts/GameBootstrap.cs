@@ -51,6 +51,7 @@ namespace CapybaraGame
             characters = new CharacterSystem(save);
             gameplay = new GameplayController();
             gameplay.StateChanged += RefreshGameplay;
+            gameplay.EventRaised += OnGameplayEvent;
             gameplay.Completed += OnCompleted;
             gameplay.Failed += OnFailed;
 
@@ -217,6 +218,31 @@ namespace CapybaraGame
             return new string('♥', lives) + new string('♡', 3 - lives);
         }
 
+        private void OnGameplayEvent(GameplayEvent e)
+        {
+            if (e.Type == GameplayEventType.MoveCorrect || e.Type == GameplayEventType.CharacterPlaced)
+            {
+                audioService.Play(SfxType.Placement);
+                haptics.Play(HapticType.Light);
+                if (board != null && e.Row >= 0) board.PlayPlacementFeedback(e.Row, e.Column);
+            }
+            else if (e.Type == GameplayEventType.CharacterRemoved)
+            {
+                audioService.Play(SfxType.Removal);
+                haptics.Play(HapticType.Tiny);
+            }
+            else if (e.Type == GameplayEventType.MoveIncorrect)
+            {
+                audioService.Play(SfxType.Invalid);
+                haptics.Play(HapticType.Medium);
+                if (board != null && e.Row >= 0) board.PlayErrorFeedback(e.Row, e.Column);
+            }
+            else if (e.Type == GameplayEventType.LifeLost)
+            {
+                audioService.Play(SfxType.LifeLost);
+            }
+        }
+
         private void OnCellTapped(int row, int column)
         {
             if (gameplay.CurrentState != GameplayState.Playing) return;
@@ -313,7 +339,7 @@ namespace CapybaraGame
             const int cost = 250;
             if (save.coins < cost) return;
             save.coins -= cost;
-            gameplay.State.livesRemaining++;
+            gameplay.State.livesRemaining = Mathf.Min(GameplayController.MaxLives, gameplay.State.livesRemaining + 1);
             SaveService.Save(save);
             RefreshGameplay();
         }
