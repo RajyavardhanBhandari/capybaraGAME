@@ -73,9 +73,18 @@ Product, UX, technical, art and Phase 1 specifications.
 - Phase 1 design/specification
 - Phase 1 playable vertical slice implementation
 
+### Phase 5 in progress
+- Configurable 500-level progression model
+- 50 explicit Hard Challenges
+- Deterministic candidate batch generation
+- Difficulty and structural-variety selection
+- Persistent LevelDatabase/PuzzleDatabase architecture
+- Level generator, preview and validation editor tools
+
 ### Not yet production-ready
 - Final character artwork
 - Final audio/haptics assets
+- Phase 5 level-system architecture and offline generation tooling
 - 500 curated production puzzles
 - Authentication/backend
 - Server-authoritative Daily
