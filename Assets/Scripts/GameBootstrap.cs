@@ -39,6 +39,7 @@ namespace CapybaraGame
         private bool pendingHint;
         private bool pendingReveal;
         private const int BerryReviveCost = 500;
+        private RewardedAdService rewardedAds;
         private readonly Color background = new Color(.965f, .945f, .925f);
         private readonly Color card = new Color(1f, .985f, .965f);
         private readonly Color text = new Color(.18f, .15f, .14f);
@@ -65,6 +66,7 @@ namespace CapybaraGame
             audioService.Initialize(save);
             haptics = new HapticService();
             haptics.Initialize(save);
+            rewardedAds = new RewardedAdService();
 
             EnsureRuntimeCamera();
             BuildCanvas();
@@ -480,8 +482,11 @@ namespace CapybaraGame
 
         private void TryRewardedBerry()
         {
-            // Rewarded-ad SDK is intentionally isolated for Phase 12. Do not fake a completed ad in production.
-            Debug.Log("Rewarded ad requested: grant exactly one berry after the ad provider confirms completion.");
+            if(rewardedAds==null || !rewardedAds.IsReady)return;
+            rewardedAds.ShowRewarded(success=>{
+                if(!success)return;
+                if(gameplay.ReviveWithBerry())BuildGameplay();
+            });
         }
 
         private void BuyBerryRevive()
