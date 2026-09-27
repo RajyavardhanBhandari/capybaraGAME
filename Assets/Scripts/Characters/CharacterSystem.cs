@@ -12,8 +12,14 @@ namespace CapybaraGame.Characters
             Active = (CharacterId)save.activeCharacter;
         }
 
+        public bool IsOwned(CharacterId id, LocalSave save)
+        {
+            return save != null && save.ownedCharacters != null && save.ownedCharacters.Contains((int)id);
+        }
+
         public void Select(CharacterId id, LocalSave save)
         {
+            if (!IsOwned(id, save)) return;
             Active = id;
             save.activeCharacter = (int)id;
             SaveService.Save(save);
