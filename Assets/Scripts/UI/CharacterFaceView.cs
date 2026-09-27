@@ -12,6 +12,14 @@ namespace CapybaraGame.UI
         private CharacterId character;
         private bool reducedMotion;
         private bool built;
+        private Image eyeL;
+        private Image eyeR;
+        private Image earL;
+        private Image earR;
+        private RectTransform headTransform;
+        private RectTransform leftCheekTransform;
+        private RectTransform rightCheekTransform;
+        private Coroutine idleRoutine;
 
         private static Sprite CircleSprite
         {
@@ -50,6 +58,11 @@ namespace CapybaraGame.UI
             Clear();
             CreateFace();
             built = true;
+            if (!reducedMotion)
+            {
+                if (idleRoutine != null) StopCoroutine(idleRoutine);
+                idleRoutine = StartCoroutine(IdleRoutine());
+            }
         }
 
         public void SetVisible(bool visible) => gameObject.SetActive(visible);
@@ -95,34 +108,37 @@ namespace CapybaraGame.UI
         private void CreateFace()
         {
             Color head, ear, inner;
+            eyeL = null; eyeR = null; earL = null; earR = null;
+            headTransform = null; leftCheekTransform = null; rightCheekTransform = null;
             switch (character)
             {
                 case CharacterId.Cat:
                     head = new Color(.94f,.72f,.54f); ear = new Color(.80f,.53f,.42f); inner = new Color(1f,.82f,.72f);
-                    Part("EarL", ear, new Vector2(.25f,.78f), new Vector2(26,26), -18f);
-                    Part("EarR", ear, new Vector2(.75f,.78f), new Vector2(26,26), 18f);
+                    earL = Part("EarL", ear, new Vector2(.25f,.78f), new Vector2(26,26), -18f);
+                    earR = Part("EarR", ear, new Vector2(.75f,.78f), new Vector2(26,26), 18f);
                     break;
                 case CharacterId.Dog:
                     head = new Color(.78f,.59f,.43f); ear = new Color(.55f,.39f,.28f); inner = new Color(.93f,.76f,.60f);
-                    Part("EarL", ear, new Vector2(.18f,.60f), new Vector2(34,48), -12f);
-                    Part("EarR", ear, new Vector2(.82f,.60f), new Vector2(34,48), 12f);
+                    earL = Part("EarL", ear, new Vector2(.18f,.60f), new Vector2(34,48), -12f);
+                    earR = Part("EarR", ear, new Vector2(.82f,.60f), new Vector2(34,48), 12f);
                     break;
                 case CharacterId.Penguin:
                     head = new Color(.20f,.27f,.31f); ear = head; inner = new Color(.97f,.96f,.91f);
                     break;
                 case CharacterId.Panda:
                     head = new Color(.94f,.94f,.91f); ear = new Color(.16f,.15f,.14f); inner = new Color(.98f,.98f,.95f);
-                    Part("EarL", ear, new Vector2(.23f,.82f), new Vector2(28,28));
-                    Part("EarR", ear, new Vector2(.77f,.82f), new Vector2(28,28));
+                    earL = Part("EarL", ear, new Vector2(.23f,.82f), new Vector2(28,28));
+                    earR = Part("EarR", ear, new Vector2(.77f,.82f), new Vector2(28,28));
                     break;
                 default:
                     head = new Color(.69f,.57f,.43f); ear = new Color(.57f,.45f,.33f); inner = new Color(.82f,.70f,.55f);
-                    Part("EarL", ear, new Vector2(.24f,.80f), new Vector2(22,22));
-                    Part("EarR", ear, new Vector2(.76f,.80f), new Vector2(22,22));
+                    earL = Part("EarL", ear, new Vector2(.24f,.80f), new Vector2(22,22));
+                    earR = Part("EarR", ear, new Vector2(.76f,.80f), new Vector2(22,22));
                     break;
             }
 
-            Part("Head", head, new Vector2(.5f,.5f), new Vector2(82,82));
+            var headImage = Part("Head", head, new Vector2(.5f,.5f), new Vector2(82,82));
+            headTransform = headImage.rectTransform;
             if (character == CharacterId.Penguin) Part("FacePatch", inner, new Vector2(.5f,.48f), new Vector2(62,64));
             if (character == CharacterId.Panda)
             {
@@ -131,15 +147,94 @@ namespace CapybaraGame.UI
             }
 
             Color eye = new Color(.10f,.09f,.08f);
-            Part("EyeL", eye, new Vector2(.38f,.59f), new Vector2(13,17));
-            Part("EyeR", eye, new Vector2(.62f,.59f), new Vector2(13,17));
+            eyeL = Part("EyeL", eye, new Vector2(.38f,.59f), new Vector2(13,17));
+            eyeR = Part("EyeR", eye, new Vector2(.62f,.59f), new Vector2(13,17));
             Part("EyeGlintL", Color.white, new Vector2(.36f,.62f), new Vector2(4,4));
             Part("EyeGlintR", Color.white, new Vector2(.60f,.62f), new Vector2(4,4));
             if (character == CharacterId.Penguin) Part("Beak", new Color(1f,.63f,.27f), new Vector2(.5f,.44f), new Vector2(15,10));
             else Part("Nose", new Color(.24f,.14f,.11f), new Vector2(.5f,.45f), new Vector2(9,7));
-            Part("BlushL", new Color(1f,.50f,.52f,.55f), new Vector2(.28f,.45f), new Vector2(16,9));
-            Part("BlushR", new Color(1f,.50f,.52f,.55f), new Vector2(.72f,.45f), new Vector2(16,9));
+            var blushL = Part("BlushL", new Color(1f,.50f,.52f,.55f), new Vector2(.28f,.45f), new Vector2(16,9));
+            var blushR = Part("BlushR", new Color(1f,.50f,.52f,.55f), new Vector2(.72f,.45f), new Vector2(16,9));
+            leftCheekTransform = blushL.rectTransform;
+            rightCheekTransform = blushR.rectTransform;
             Part("Mouth", new Color(.24f,.14f,.13f), new Vector2(.5f,.37f), new Vector2(13,5));
+        }
+
+
+        private System.Collections.IEnumerator IdleRoutine()
+        {
+            float phase = Random.Range(0f, 6.28f);
+            while (built && !reducedMotion)
+            {
+                float duration = Random.Range(2.4f, 3.8f);
+                float elapsed = 0f;
+                var root = transform as RectTransform;
+                Vector2 start = root != null ? root.anchoredPosition : Vector2.zero;
+                float bobAmount = character == CharacterId.Capybara ? 1.8f : 1.2f;
+                while (elapsed < duration)
+                {
+                    elapsed += Time.unscaledDeltaTime;
+                    phase += Time.unscaledDeltaTime * 2.0f;
+                    float bob = Mathf.Sin(phase) * bobAmount;
+                    if (root != null) root.anchoredPosition = start + new Vector2(0f, bob);
+                    if (headTransform != null)
+                        headTransform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(phase * .55f) * .7f);
+                    if (leftCheekTransform != null && rightCheekTransform != null)
+                    {
+                        float cheek = 1f + Mathf.Sin(phase) * .025f;
+                        leftCheekTransform.localScale = Vector3.one * cheek;
+                        rightCheekTransform.localScale = Vector3.one * cheek;
+                    }
+                    yield return null;
+                }
+                yield return BlinkRoutine();
+                if (Random.value < .22f) yield return BlinkRoutine();
+                if (Random.value < .35f && earL != null && earR != null) yield return EarWiggleRoutine();
+            }
+        }
+
+        private System.Collections.IEnumerator BlinkRoutine()
+        {
+            if (eyeL == null || eyeR == null) yield break;
+            Vector2 leftSize = eyeL.rectTransform.sizeDelta;
+            Vector2 rightSize = eyeR.rectTransform.sizeDelta;
+            float t = 0f;
+            while (t < .07f)
+            {
+                t += Time.unscaledDeltaTime;
+                float p = Mathf.Clamp01(t / .07f);
+                eyeL.rectTransform.sizeDelta = new Vector2(leftSize.x, Mathf.Lerp(leftSize.y, 2.5f, p));
+                eyeR.rectTransform.sizeDelta = new Vector2(rightSize.x, Mathf.Lerp(rightSize.y, 2.5f, p));
+                yield return null;
+            }
+            t = 0f;
+            while (t < .09f)
+            {
+                t += Time.unscaledDeltaTime;
+                float p = Mathf.Clamp01(t / .09f);
+                eyeL.rectTransform.sizeDelta = new Vector2(leftSize.x, Mathf.Lerp(2.5f, leftSize.y, p));
+                eyeR.rectTransform.sizeDelta = new Vector2(rightSize.x, Mathf.Lerp(2.5f, rightSize.y, p));
+                yield return null;
+            }
+        }
+
+        private System.Collections.IEnumerator EarWiggleRoutine()
+        {
+            if (earL == null || earR == null) yield break;
+            float leftStart = earL.rectTransform.localEulerAngles.z;
+            float rightStart = earR.rectTransform.localEulerAngles.z;
+            if (leftStart > 180f) leftStart -= 360f;
+            if (rightStart > 180f) rightStart -= 360f;
+            float t = 0f;
+            while (t < .28f)
+            {
+                t += Time.unscaledDeltaTime;
+                float p = Mathf.Clamp01(t / .28f);
+                float wiggle = Mathf.Sin(p * Mathf.PI * 2f) * 5f * (1f - p);
+                earL.rectTransform.localRotation = Quaternion.Euler(0f, 0f, leftStart + wiggle);
+                earR.rectTransform.localRotation = Quaternion.Euler(0f, 0f, rightStart - wiggle);
+                yield return null;
+            }
         }
 
         private System.Collections.IEnumerator PopRoutine()
