@@ -30,7 +30,7 @@ namespace CapybaraGame.Levels
                 seed = Seed,
                 generationVersion = PuzzleRepository.GeneratorVersion,
                 maxAttempts = 5000,
-                targetBand = Difficulty
+                targetBand = IsBreather ? PuzzleDifficultyBand.Easy : Difficulty
             };
         }
     }
