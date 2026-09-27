@@ -16,6 +16,8 @@ namespace CapybaraGame.Levels
         public int RegionCount;
         public int Seed;
         public bool IsHardChallenge;
+        public bool IsBreather;
+        public bool IsTeaching;
         public bool IsUnlockedByPrevious;
 
         public PuzzleGenerationConfig CreatePuzzleConfig()
@@ -28,7 +30,7 @@ namespace CapybaraGame.Levels
                 seed = Seed,
                 generationVersion = PuzzleRepository.GeneratorVersion,
                 maxAttempts = 5000,
-                targetBand = Difficulty
+                targetBand = IsBreather ? PuzzleDifficultyBand.Easy : Difficulty
             };
         }
     }
@@ -83,6 +85,8 @@ namespace CapybaraGame.Levels
                 RegionCount = tier.BoardSize,
                 Seed = PuzzleSeed.ForLevel(level),
                 IsHardChallenge = level % 10 == 0,
+                IsBreather = level > 4 && level % 10 == 5,
+                IsTeaching = level <= 4,
                 IsUnlockedByPrevious = level > 1
             };
             Cache[level] = definition;
@@ -105,6 +109,7 @@ namespace CapybaraGame.Levels
                 Id = source.Id, DisplayName = source.DisplayName, Difficulty = source.Difficulty,
                 Category = source.Category, BoardSize = source.BoardSize, RegionCount = source.RegionCount,
                 Seed = source.Seed, IsHardChallenge = source.IsHardChallenge,
+                IsBreather = source.IsBreather, IsTeaching = source.IsTeaching,
                 IsUnlockedByPrevious = source.IsUnlockedByPrevious
             };
         }

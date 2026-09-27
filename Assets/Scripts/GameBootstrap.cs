@@ -37,6 +37,7 @@ namespace CapybaraGame
         private Canvas canvas;
         private RectTransform safeAreaRoot;
         private Text resourceText;
+        private Text deductionText;
         private Font font;
         private Sprite roundedSprite;
         private readonly System.Collections.Generic.List<GameObject> spawned = new System.Collections.Generic.List<GameObject>();
@@ -317,7 +318,9 @@ namespace CapybaraGame
             var bg=Panel(canvas.transform,background,Vector2.zero,Vector2.one);
 
             Button(bg.transform,"‹",34,card,ShowHome,new Vector2(.06f,.91f),new Vector2(.15f,.97f));
-            Label(bg.transform,dailyMode?"DAILY":goldenMode?"GOLDEN CHALLENGE":$"LEVEL {gameplay.LevelId}",30,TextAnchor.MiddleCenter,text,new Vector2(.20f,.92f),new Vector2(.80f,.97f));
+            var levelDefinition = LevelCatalog.Get(gameplay.LevelId);
+            string readyTitle = dailyMode ? "DAILY" : goldenMode ? "GOLDEN CHALLENGE" : levelDefinition.IsHardChallenge ? "HARD CHALLENGE" : levelDefinition.IsBreather ? "BREATHER LEVEL" : "LEVEL "+gameplay.LevelId;
+            Label(bg.transform,readyTitle,30,TextAnchor.MiddleCenter,text,new Vector2(.20f,.92f),new Vector2(.80f,.97f));
             var coinPill=Panel(bg.transform,new Color(1f,.985f,.965f),new Vector2(.70f,.855f),new Vector2(.92f,.90f));
             Label(coinPill.transform,"●  "+save.coins,17,TextAnchor.MiddleCenter,new Color(.68f,.47f,.12f),Vector2.zero,Vector2.one);
 
@@ -332,6 +335,10 @@ namespace CapybaraGame
             var rules=Panel(bg.transform,card,new Vector2(.08f,.38f),new Vector2(.92f,.54f));
             Label(rules.transform,"3 "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter)+"  •  1 per region  •  1 per row  •  1 per column",17,TextAnchor.MiddleCenter,text,new Vector2(.05f,.52f),new Vector2(.95f,.92f));
             Label(rules.transform,"Characters cannot touch, including diagonally.",16,TextAnchor.MiddleCenter,new Color(.48f,.42f,.38f),new Vector2(.05f,.12f),new Vector2(.95f,.52f));
+            if (levelDefinition.IsTeaching)
+                Label(bg.transform,"LEARN: mark impossible cells with X, then place when only one candidate remains.",15,TextAnchor.MiddleCenter,new Color(.42f,.52f,.38f),new Vector2(.08f,.32f),new Vector2(.92f,.37f));
+            else if (levelDefinition.IsBreather)
+                Label(bg.transform,"BREATHER: a lower-pressure puzzle before the next difficulty step.",15,TextAnchor.MiddleCenter,new Color(.42f,.52f,.38f),new Vector2(.08f,.32f),new Vector2(.92f,.37f));
 
             if(!dailyMode && !goldenMode && (save.hintAids>0 || save.revealAids>0))
             {
@@ -373,6 +380,12 @@ namespace CapybaraGame
         {
             string day = ChallengeService.TodayIdUtc();
             if (ChallengeService.HasDailyResult(day)) { ShowDailyStatus(day); return; }
+            var readiness = DailyReadinessService.Evaluate(day);
+            if (!readiness.Ready)
+            {
+                ShowDailyStatus(day);
+                return;
+            }
             dailyMode = true; goldenMode = false; pendingHint = false; pendingReveal = false;
             gameplay.LoadLevel(ChallengeService.DailyLevelId(day), characters.Active);
             AnalyticsService.Track("daily_started", day);
@@ -467,12 +480,12 @@ namespace CapybaraGame
 
             // Character identity strip
             var identity=Panel(bg.transform,new Color(1f,.985f,.965f),new Vector2(.07f,.855f),new Vector2(.93f,.905f));
-            Label(identity.transform,CharacterCatalog.Name(gameplay.ActiveCharacter).ToUpper()+"  ·  "+puzzle.difficultyBand.ToUpper(),16,TextAnchor.MiddleCenter,new Color(.48f,.42f,.38f),Vector2.zero,Vector2.one);
+            Label(identity.transform,CharacterCatalog.Name(gameplay.ActiveCharacter).ToUpper()+"  ·  "+(puzzle.isHardChallenge ? "HARD CHALLENGE" : puzzle.difficultyBand.ToUpper()),16,TextAnchor.MiddleCenter,new Color(.48f,.42f,.38f),Vector2.zero,Vector2.one);
 
             // Rule cards
             var rules=Panel(bg.transform,card,new Vector2(.07f,.775f),new Vector2(.93f,.845f));
             Label(rules.transform,"1 / REGION     1 / ROW     1 / COLUMN     NO TOUCHING",15,TextAnchor.MiddleCenter,text,new Vector2(.03f,.35f),new Vector2(.97f,.90f));
-            Label(rules.transform,"Single tap = X   •   Double tap = place",14,TextAnchor.MiddleCenter,new Color(.50f,.44f,.40f),new Vector2(.03f,.02f),new Vector2(.97f,.40f));
+            Label(rules.transform,levelDefinition.IsTeaching ? "Single tap = mark X   •   Double tap = place" : "Single tap = X   •   Double tap = place",14,TextAnchor.MiddleCenter,new Color(.50f,.44f,.40f),new Vector2(.03f,.02f),new Vector2(.97f,.40f));
 
             // Board dominates the screen
             var boardCard=Panel(bg.transform,new Color(1f,.995f,.985f),new Vector2(.055f,.275f),new Vector2(.945f,.765f));
@@ -488,6 +501,9 @@ namespace CapybaraGame
             var guide=Panel(bg.transform,card,new Vector2(.08f,.19f),new Vector2(.92f,.245f));
             Label(guide.transform,"X  MARK CANDIDATE",15,TextAnchor.MiddleLeft,new Color(.48f,.42f,.38f),new Vector2(.04f,.05f),new Vector2(.48f,.95f));
             Label(guide.transform,"DOUBLE-TAP  PLACE",15,TextAnchor.MiddleRight,new Color(.48f,.42f,.38f),new Vector2(.52f,.05f),new Vector2(.96f,.95f));
+            var deduction = DeductionAnalyzer.Analyze(puzzle, gameplay.State, 1);
+            string deductionMessage = deduction.Count > 0 ? "DEDUCTION  ·  "+deduction[0].Message : "KEEP ELIMINATING ROWS, COLUMNS, REGIONS AND NEIGHBORS";
+            deductionText = Label(bg.transform,deductionMessage,13,TextAnchor.MiddleCenter,new Color(.42f,.47f,.40f),new Vector2(.08f,.15f),new Vector2(.92f,.185f));
 
             Label(bg.transform,"AIDS PREPARED BEFORE PLAY  ·  NO SHOPPING DURING PUZZLE",13,TextAnchor.MiddleCenter,new Color(.55f,.50f,.46f),new Vector2(.08f,.10f),new Vector2(.92f,.15f));
             var coinPill=Panel(bg.transform,card,new Vector2(.32f,.045f),new Vector2(.68f,.09f));
@@ -544,6 +560,11 @@ namespace CapybaraGame
             board.Refresh(gameplay.State);
             if (resourceText != null)
                 resourceText.text = CharacterCatalog.ResourceIcon(gameplay.ActiveCharacter)+"  "+gameplay.State.livesRemaining+" "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter);
+            if (deductionText != null)
+            {
+                var deductions = DeductionAnalyzer.Analyze(gameplay.Puzzle, gameplay.State, 1);
+                deductionText.text = deductions.Count > 0 ? "DEDUCTION  ·  "+deductions[0].Message : "KEEP ELIMINATING ROWS, COLUMNS, REGIONS AND NEIGHBORS";
+            }
         }
 
         private void OnCompleted(RewardResult reward)
@@ -591,15 +612,16 @@ namespace CapybaraGame
             mascot.transform.SetParent(hero.transform,false);
             var mr=mascot.GetComponent<RectTransform>();
             mr.anchorMin=new Vector2(.34f,.20f); mr.anchorMax=new Vector2(.66f,.88f); mr.offsetMin=mr.offsetMax=Vector2.zero;
-            var face=mascot.AddComponent<CharacterFaceView>(); face.Build(gameplay.ActiveCharacter,save.reducedMotion); face.SetVisible(true);
-            Label(hero.transform,solved?"PUZZLE SOLVED!":"OUT OF "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter).ToUpper(),26,TextAnchor.MiddleCenter,text,new Vector2(.05f,.05f),new Vector2(.95f,.22f));
+            var face=mascot.AddComponent<CharacterFaceView>(); face.Build(gameplay.ActiveCharacter,save.reducedMotion); face.SetVisible(true); face.PlayEmotion(solved ? "success" : "failure");
+            bool perfect = solved && gameplay.State.livesRemaining >= GameplayController.MaxLives;
+            Label(hero.transform,perfect?"PERFECT SOLVE!":solved?"PUZZLE SOLVED!":"OUT OF "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter).ToUpper(),26,TextAnchor.MiddleCenter,text,new Vector2(.05f,.05f),new Vector2(.95f,.22f));
 
             var rewardCard=Panel(bg.transform,card,new Vector2(.10f,.36f),new Vector2(.90f,.48f));
             if(solved)
             {
                 Label(rewardCard.transform,"+"+reward.Treats+" TREATS",22,TextAnchor.MiddleLeft,new Color(.68f,.47f,.12f),new Vector2(.06f,.45f),new Vector2(.52f,.90f));
                 Label(rewardCard.transform,"+"+reward.Coins+" COINS",22,TextAnchor.MiddleRight,new Color(.45f,.68f,.28f),new Vector2(.48f,.45f),new Vector2(.94f,.90f));
-                Label(rewardCard.transform,gameplay.State.livesRemaining+" "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter)+" remaining",16,TextAnchor.MiddleCenter,new Color(.50f,.44f,.40f),new Vector2(.06f,.05f),new Vector2(.94f,.45f));
+                Label(rewardCard.transform,(perfect?"NO MISTAKES  ·  ":"")+gameplay.State.livesRemaining+" "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter)+" remaining",16,TextAnchor.MiddleCenter,new Color(.50f,.44f,.40f),new Vector2(.06f,.05f),new Vector2(.94f,.45f));
                 Button(bg.transform,(dailyMode||goldenMode)?"BACK TO HOME":gameplay.LevelId<500?"NEXT LEVEL":"ALL LEVELS COMPLETE",28,new Color(.55f,.78f,.48f),()=>{
                     gameplay.Advance();
                     if(dailyMode||goldenMode){dailyMode=false;goldenMode=false;ShowHome();return;}
