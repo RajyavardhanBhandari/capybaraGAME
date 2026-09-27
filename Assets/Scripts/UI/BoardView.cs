@@ -14,6 +14,9 @@ namespace CapybaraGame.UI
         private Image background;
         private Text mark;
         private Outline outline;
+        private GameObject brokenHeart;
+        private Text brokenHeartLeft;
+        private Text brokenHeartRight;
         private readonly Image[] edges = new Image[4];
         private Action<int, int> clicked;
         private Action<int, int> doubleClicked;
@@ -50,15 +53,50 @@ namespace CapybaraGame.UI
             mark = labelObject.GetComponent<Text>();
             mark.alignment = TextAnchor.MiddleCenter;
             mark.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            mark.fontSize = 26;
-            mark.color = new Color(.30f, .28f, .27f, .60f);
+            mark.fontSize = 30;
+            mark.color = Color.white;
             mark.fontStyle = FontStyle.Bold;
             mark.raycastTarget = false;
+            CreateBrokenHeartEffect();
 
             CreateEdge("Top", 0, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, -2), new Vector2(0, 0));
             CreateEdge("Right", 1, new Vector2(1, 0), new Vector2(1, 1), new Vector2(-2, 0), new Vector2(0, 0));
             CreateEdge("Bottom", 2, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 0), new Vector2(0, 2));
             CreateEdge("Left", 3, new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0), new Vector2(2, 0));
+        }
+
+
+        private void CreateBrokenHeartEffect()
+        {
+            brokenHeart = new GameObject("BrokenHeartEffect", typeof(RectTransform));
+            brokenHeart.transform.SetParent(transform, false);
+            var root = brokenHeart.GetComponent<RectTransform>();
+            root.anchorMin = Vector2.zero;
+            root.anchorMax = Vector2.one;
+            root.offsetMin = root.offsetMax = Vector2.zero;
+
+            brokenHeartLeft = CreateHeartPart("HeartLeft", root);
+            brokenHeartRight = CreateHeartPart("HeartRight", root);
+            brokenHeart.SetActive(false);
+        }
+
+        private Text CreateHeartPart(string name, RectTransform parent)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Text));
+            go.transform.SetParent(parent, false);
+            var r = go.GetComponent<RectTransform>();
+            r.anchorMin = r.anchorMax = new Vector2(.5f, .5f);
+            r.pivot = new Vector2(.5f, .5f);
+            r.sizeDelta = new Vector2(70f, 70f);
+            var t = go.GetComponent<Text>();
+            t.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            t.text = "♥";
+            t.fontSize = 52;
+            t.fontStyle = FontStyle.Bold;
+            t.alignment = TextAnchor.MiddleCenter;
+            t.color = new Color(.95f, .22f, .25f, 0f);
+            t.raycastTarget = false;
+            return t;
         }
 
         public void OnPointerClick(PointerEventData eventData)
@@ -92,7 +130,8 @@ namespace CapybaraGame.UI
             face.Configure(active, reducedMotion);
             face.SetVisible(occupied);
             mark.text = marked && !occupied ? "×" : string.Empty;
-            mark.fontSize = Mathf.Max(24, 110 / puzzle.rows);
+            mark.fontSize = Mathf.Max(28, 120 / puzzle.rows);
+            mark.color = feedbackError ? new Color(.94f,.18f,.18f,1f) : Color.white;
             outline.effectColor = selected
                 ? new Color(0.10f, 0.10f, 0.10f, 0.70f)
                 : feedbackError
@@ -119,6 +158,42 @@ namespace CapybaraGame.UI
         public void Shake(bool reducedMotion)
         {
             if (!reducedMotion) StartCoroutine(ShakeRoutine());
+        }
+
+        public void PlayBrokenHeart(bool reducedMotion)
+        {
+            if (reducedMotion || brokenHeart == null) return;
+            StartCoroutine(BrokenHeartRoutine());
+        }
+
+
+        private System.Collections.IEnumerator BrokenHeartRoutine()
+        {
+            brokenHeart.SetActive(true);
+            var left = brokenHeartLeft.rectTransform;
+            var right = brokenHeartRight.rectTransform;
+            left.anchoredPosition = new Vector2(-2f, -2f);
+            right.anchoredPosition = new Vector2(2f, -2f);
+            left.localRotation = Quaternion.Euler(0f, 0f, 0f);
+            right.localRotation = Quaternion.Euler(0f, 0f, 0f);
+            brokenHeartLeft.color = new Color(.95f,.22f,.25f,0f);
+            brokenHeartRight.color = new Color(.95f,.22f,.25f,0f);
+
+            float t = 0f;
+            while (t < .42f)
+            {
+                t += Time.unscaledDeltaTime;
+                float p = Mathf.Clamp01(t / .42f);
+                float ease = 1f - Mathf.Pow(1f - p, 3f);
+                brokenHeartLeft.color = new Color(.95f,.22f,.25f,1f - p);
+                brokenHeartRight.color = new Color(.95f,.22f,.25f,1f - p);
+                left.anchoredPosition = new Vector2(Mathf.Lerp(-2f,-20f,ease), Mathf.Lerp(-2f,16f,ease));
+                right.anchoredPosition = new Vector2(Mathf.Lerp(2f,20f,ease), Mathf.Lerp(-2f,16f,ease));
+                left.localRotation = Quaternion.Euler(0f,0f,Mathf.Lerp(0f, -16f, ease));
+                right.localRotation = Quaternion.Euler(0f,0f,Mathf.Lerp(0f, 16f, ease));
+                yield return null;
+            }
+            brokenHeart.SetActive(false);
         }
 
         private System.Collections.IEnumerator PulseRoutine()
@@ -160,6 +235,7 @@ namespace CapybaraGame.UI
         private GridLayoutGroup grid;
         private RectTransform rect;
         private PuzzleDefinition puzzle;
+        private PuzzleState lastState;
         private Color[] regionColors;
         private CharacterId activeCharacter;
         private int selectedIndex = -1;
@@ -170,6 +246,7 @@ namespace CapybaraGame.UI
         public void Build(PuzzleDefinition definition, Color[] colors, CharacterId character, bool reduced, Action<int, int> tap, Action<int, int> doubleTap)
         {
             puzzle = definition;
+            lastState = null;
             regionColors = colors;
             activeCharacter = character;
             reducedMotion = reduced;
@@ -209,6 +286,7 @@ namespace CapybaraGame.UI
 
         public void Refresh(PuzzleState state)
         {
+            lastState = state;
             for (int i = 0; i < cells.Count; i++)
             {
                 int r = i / puzzle.columns;
@@ -236,6 +314,28 @@ namespace CapybaraGame.UI
             int index = row * puzzle.columns + column;
             if (index < 0 || index >= cells.Count) return;
             cells[index].Shake(reducedMotion);
+            cells[index].PlayBrokenHeart(reducedMotion);
+            StartCoroutine(ErrorMarkRoutine(index));
+        }
+
+        private System.Collections.IEnumerator ErrorMarkRoutine(int index)
+        {
+            float t = 0f;
+            while (t < .55f)
+            {
+                t += Time.unscaledDeltaTime;
+                for (int i = 0; i < cells.Count; i++)
+                {
+                    if (i == index && lastState != null)
+                    {
+                        int r = i / puzzle.columns;
+                        int col = i % puzzle.columns;
+                        cells[i].Refresh(puzzle, lastState, activeCharacter, regionColors[puzzle.RegionAt(r,col) % regionColors.Length], false, true, reducedMotion);
+                    }
+                }
+                yield return null;
+            }
+            if (lastState != null) Refresh(lastState);
         }
 
         private void UpdateCellSize()
