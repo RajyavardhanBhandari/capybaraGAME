@@ -254,7 +254,7 @@ namespace CapybaraGame.Levels
             }
 
             int index = Math.Max(1, level / 10);
-            float hardScore = 55f + (index - 1) * (36f / 49f);
+            float hardScore = LevelProgressionRules.HardChallengeTargetScore(index);
             if (band != null)
             {
                 float bandFloor = band.targetDifficultyMin;
