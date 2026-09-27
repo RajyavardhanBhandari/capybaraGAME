@@ -147,13 +147,14 @@ Constraints:
 ## 13. UX
 
 Home:
-Profile, coins, level, Play, streak, Daily Puzzle, leaderboard position.
+current level, Capybara mascot, Play, Store, How To Play, Settings, coins, progress snapshot.
 
 Gameplay:
-Back/settings, level, lives, board, Hint, Reveal, Extra Life, coins.
+level, active character, character-specific mistake resource, rule reminder, board, interaction guidance, coins.
 
-Bottom navigation:
-Home | Daily | Shop | Leaderboard | Profile
+Progression is strictly sequential. There is no player-facing Level Select or progression map.
+
+Aids are purchased only in Store and prepared before the puzzle. Active gameplay has no purchasing controls.
 
 Onboarding explains only:
 - one per region
