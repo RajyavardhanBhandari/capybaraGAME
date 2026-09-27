@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using CapybaraGame.Core;
 using CapybaraGame.Puzzle;
 
@@ -10,6 +11,7 @@ namespace CapybaraGame.Levels
         public const int MaxLevel = 500;
         public const int CurrentVersion = 1;
         private static readonly Dictionary<int, LevelDefinition> Cache = new Dictionary<int, LevelDefinition>();
+        private static LevelDatabaseAsset DatabaseAsset;
         private static readonly LevelGenerationConfig Config = new LevelGenerationConfig();
 
         public static bool TryGet(int level, out LevelDefinition definition)
@@ -31,6 +33,20 @@ namespace CapybaraGame.Levels
 
             if (Cache.TryGetValue(level, out var cached))
                 return cached.Clone();
+
+            EnsureDatabaseLoaded();
+            if (DatabaseAsset != null && DatabaseAsset.levels != null && DatabaseAsset.levels.Count > 0)
+            {
+                for (int i = 0; i < DatabaseAsset.levels.Count; i++)
+                {
+                    var stored = DatabaseAsset.levels[i];
+                    if (stored != null && stored.Id == level)
+                    {
+                        Cache[level] = stored.Clone();
+                        return stored.Clone();
+                    }
+                }
+            }
 
             var band = Config.GetBand(level);
             var hard = LevelProgressionRules.IsHardChallenge(level, Config.hardChallengeFrequency);
@@ -59,7 +75,17 @@ namespace CapybaraGame.Levels
 
         public static int NextLevel(int level) => level >= 1 && level < MaxLevel ? level + 1 : -1;
 
-        public static void ClearCache() => Cache.Clear();
+        public static void ClearCache()
+        {
+            Cache.Clear();
+            DatabaseAsset = null;
+        }
+
+        private static void EnsureDatabaseLoaded()
+        {
+            if (DatabaseAsset == null)
+                DatabaseAsset = Resources.Load<LevelDatabaseAsset>("Levels/LevelDatabase");
+        }
 
         public static LevelGenerationConfig Configuration => Config;
 
