@@ -41,6 +41,8 @@ namespace CapybaraGame.Editor
                 lastReport =
                     $"Generated={output.Report.GeneratedCandidates}\n" +
                     $"Unique={output.Report.UniqueCandidates}\n" +
+                    $"Duplicate Rate={output.Report.DuplicateRate:P1}\n" +
+                    $"Variety Rejections={output.Report.SimilarCandidatesRejected}\n" +
                     $"Selected={output.Report.SelectedLevels}\n" +
                     $"Hard Challenges={output.Report.HardChallenges}\n" +
                     $"Elapsed={output.Report.Elapsed.TotalSeconds:0.00}s\n" +
