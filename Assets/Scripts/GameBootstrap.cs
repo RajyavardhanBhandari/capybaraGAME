@@ -68,6 +68,26 @@ namespace CapybaraGame
             ShowHome();
         }
 
+        private void EnsureRuntimeCamera()
+        {
+            var existing = Object.FindFirstObjectByType<Camera>();
+            if (existing != null)
+            {
+                if (existing.GetComponent<AudioListener>() == null)
+                    existing.gameObject.AddComponent<AudioListener>();
+                return;
+            }
+
+            var cameraObject = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener));
+            cameraObject.transform.SetParent(transform, false);
+            var camera = cameraObject.GetComponent<Camera>();
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = Color.black;
+            camera.orthographic = true;
+            camera.orthographicSize = 5f;
+            camera.transform.position = new Vector3(0f, 0f, -10f);
+        }
+
         private void BuildCanvas()
         {
             var canvasObject = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
