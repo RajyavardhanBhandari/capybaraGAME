@@ -27,8 +27,9 @@ namespace CapybaraGame.Core
     }
     [Serializable] public sealed class PuzzleState
     {
-        public string puzzleId; public int[] placed; public int livesRemaining=3; public PuzzleStatus status=PuzzleStatus.Ready;
-        public PuzzleState(string id,int cellCount=100){puzzleId=id;placed=new int[cellCount];for(int i=0;i<placed.Length;i++)placed[i]=-1;}
+        public string puzzleId; public int[] placed; public bool[] marks; public int berriesRemaining=3; public PuzzleStatus status=PuzzleStatus.Ready;
+        public int livesRemaining { get => berriesRemaining; set => berriesRemaining = Mathf.Clamp(value, 0, 3); }
+        public PuzzleState(string id,int cellCount=100){puzzleId=id;placed=new int[cellCount];marks=new bool[cellCount];for(int i=0;i<placed.Length;i++)placed[i]=-1;}
     }
     [Serializable] public sealed class LocalSave
     {
@@ -39,5 +40,7 @@ namespace CapybaraGame.Core
         public static readonly CharacterId[] All={CharacterId.Capybara,CharacterId.Cat,CharacterId.Dog,CharacterId.Penguin,CharacterId.Panda};
         public static string Name(CharacterId id){switch(id){case CharacterId.Capybara:return "Capybara";case CharacterId.Cat:return "Cat";case CharacterId.Dog:return "Dog";case CharacterId.Penguin:return "Penguin";default:return "Panda";}}
         public static string Symbol(CharacterId id){switch(id){case CharacterId.Capybara:return "C";case CharacterId.Cat:return "K";case CharacterId.Dog:return "D";case CharacterId.Penguin:return "P";default:return "B";}}
+        public static string ResourceName(CharacterId id){switch(id){case CharacterId.Capybara:return "berries";case CharacterId.Cat:return "fish";case CharacterId.Dog:return "bones";case CharacterId.Penguin:return "fish";default:return "bamboo";}}
+        public static string ResourceIcon(CharacterId id){switch(id){case CharacterId.Capybara:return "●";case CharacterId.Cat:return "◆";case CharacterId.Dog:return "▰";case CharacterId.Penguin:return "◆";default:return "▰";}}
     }
 }
