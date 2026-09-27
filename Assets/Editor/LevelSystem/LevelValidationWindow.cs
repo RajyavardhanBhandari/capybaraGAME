@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 using CapybaraGame.Core;
@@ -56,10 +57,41 @@ namespace CapybaraGame.Editor
             if (hardChallenges != 50)
                 Fail(ref failures, "Expected 50 Hard Challenges, found " + hardChallenges);
 
+            var levelAsset = Resources.Load<LevelDatabaseAsset>("Levels/LevelDatabase");
+            var puzzleAsset = Resources.Load<PuzzleDatabaseAsset>("Levels/PuzzleDatabase");
+            if (levelAsset != null)
+            {
+                if (levelAsset.levels == null || levelAsset.levels.Count != LevelCatalog.MaxLevel)
+                    Fail(ref failures, "Persistent LevelDatabase asset is not a complete 500-level database.");
+            }
+            else
+            {
+                Debug.LogWarning("Persistent LevelDatabase asset has not been generated yet.");
+            }
+
+            if (puzzleAsset != null)
+            {
+                if (puzzleAsset.puzzles == null || puzzleAsset.puzzles.Count != LevelCatalog.MaxLevel)
+                    Fail(ref failures, "Persistent PuzzleDatabase asset is not a complete 500-puzzle database.");
+            }
+            else
+            {
+                Debug.LogWarning("Persistent PuzzleDatabase asset has not been generated yet.");
+            }
+
             string result = failures == 0
                 ? "PHASE 5 VALIDATION PASSED"
                 : "PHASE 5 VALIDATION FAILED: " + failures + " issue(s)";
 
+            const string reportDirectory = "Assets/Data/Levels";
+            if (!Directory.Exists(reportDirectory)) Directory.CreateDirectory(reportDirectory);
+            File.WriteAllText(
+                Path.Combine(reportDirectory, "LevelValidationReport.txt"),
+                result + System.Environment.NewLine +
+                "HardChallenges=" + hardChallenges + System.Environment.NewLine +
+                "Fingerprints=" + fingerprints.Count + System.Environment.NewLine);
+
+            AssetDatabase.Refresh();
             Debug.Log(result);
             EditorUtility.DisplayDialog("Capybara Level Validation", result, "OK");
         }
