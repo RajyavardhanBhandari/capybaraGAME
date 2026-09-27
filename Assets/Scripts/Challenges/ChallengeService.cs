@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using UnityEngine;
+using CapybaraGame.Core;
 
 namespace CapybaraGame.Challenges
 {
