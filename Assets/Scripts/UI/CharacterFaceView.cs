@@ -43,9 +43,10 @@ namespace CapybaraGame.UI
 
         public void Configure(CharacterId id, bool reduced, bool forceRebuild = false)
         {
+            bool changed = !built || character != id || reducedMotion != reduced;
             character = id;
             reducedMotion = reduced;
-            if (!forceRebuild && built) return;
+            if (!forceRebuild && built && !changed) return;
             Clear();
             CreateFace();
             built = true;
