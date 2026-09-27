@@ -8,7 +8,7 @@ A friendly, polished capybara-led puzzle game built around a simple placement pu
 
 ## 2. Core loop
 
-Open game → select progression puzzle → place characters → mistakes consume lives → solve → receive coins/Treats → advance → collect/customize → return for Daily Puzzle → participate in weekly competition.
+Open game → play the current progression puzzle → mark candidates with X → double-tap to place the active animal → mistakes consume character-specific berries/tokens → solve → receive coins/Treats → automatically advance → collect/customize → return for Daily Puzzle → participate in weekly competition.
 
 ## 3. Puzzle rules
 
@@ -21,10 +21,11 @@ A valid solution must satisfy:
 - no two placed characters may touch, including diagonally
 
 Input:
-- tap empty cell = place selected character
-- tap occupied cell = remove character
-- invalid placement = error feedback + one life
-- zero lives = failed attempt
+- tap empty cell = mark/remove an X
+- tap occupied animal = remove it
+- double-tap empty cell = attempt to place the active character
+- invalid placement = error feedback + one character-specific mistake token
+- zero mistake tokens = failed attempt
 
 No alternate rules at launch.
 
@@ -32,7 +33,7 @@ No alternate rules at launch.
 
 500 levels at launch.
 
-Levels are generated, validated, solved, difficulty-scored, fingerprinted, deduplicated, curated, and playtested before production use.
+Levels are generated, validated, solved, difficulty-scored, fingerprinted, deduplicated, curated, and playtested before production use. Progression is strictly sequential. There is no level-select screen and no manual level jumping in the player-facing flow.
 
 Every 10th level is a Hard Challenge.
 
@@ -91,8 +92,8 @@ Uses:
 - cosmetics
 - gameplay aids
 
-### Lives
-Three per normal puzzle attempt. Not an energy system.
+### Puzzle Mistake Tokens
+Three per normal puzzle attempt, presented using the active character's resource rather than the word “lives”. Capybara uses berries, Cat/Penguin use fish, Dog uses bones, Panda uses bamboo. These are temporary mistake protection and are not spendable currency.
 
 ### Treats
 Performance/competitive score. Not spendable.
