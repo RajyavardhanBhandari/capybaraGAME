@@ -34,6 +34,7 @@ namespace CapybaraGame
         private BoardView board;
         private Canvas canvas;
         private Font font;
+        private Sprite roundedSprite;
         private readonly System.Collections.Generic.List<GameObject> spawned = new System.Collections.Generic.List<GameObject>();
         private int levelSelectPage;
         private readonly Color background = new Color(.965f, .945f, .925f);
@@ -115,14 +116,39 @@ namespace CapybaraGame
             board = null;
         }
 
+        private Sprite RoundedSprite()
+        {
+            if (roundedSprite != null) return roundedSprite;
+            const int size = 128, radius = 22;
+            var tex = new Texture2D(size,size,TextureFormat.RGBA32,false);
+            tex.filterMode = FilterMode.Bilinear;
+            var px = new Color[size*size];
+            for(int y=0;y<size;y++) for(int x=0;x<size;x++)
+            {
+                float dx=Mathf.Max(radius-x,0f,x-(size-1-radius));
+                float dy=Mathf.Max(radius-y,0f,y-(size-1-radius));
+                float a=(dx==0f||dy==0f)?1f:Mathf.Clamp01(radius+1f-Mathf.Sqrt(dx*dx+dy*dy));
+                px[y*size+x]=new Color(1f,1f,1f,a);
+            }
+            tex.SetPixels(px); tex.Apply();
+            roundedSprite=Sprite.Create(tex,new Rect(0,0,size,size),new Vector2(.5f,.5f),size,0,SpriteMeshType.FullRect,new Vector4(radius,radius,radius,radius),false);
+            return roundedSprite;
+        }
+
         private GameObject Panel(Transform parent, Color color, Vector2 min, Vector2 max)
         {
-            var go = new GameObject("Panel", typeof(Image));
+            var go = new GameObject("Panel", typeof(Image), typeof(Shadow));
             go.transform.SetParent(parent, false);
             var rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = min; rect.anchorMax = max;
-            rect.offsetMin = rect.offsetMax = Vector2.zero;
-            go.GetComponent<Image>().color = color;
+            rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = rect.offsetMax = Vector2.zero;
+            var image=go.GetComponent<Image>();
+            image.color=color;
+            if(min!=Vector2.zero || max!=Vector2.one) image.sprite=RoundedSprite();
+            image.raycastTarget=false;
+            var shadow=go.GetComponent<Shadow>();
+            shadow.effectColor=new Color(.15f,.12f,.10f,.08f);
+            shadow.effectDistance=new Vector2(0,-4);
+            shadow.useGraphicAlpha=true;
             spawned.Add(go);
             return go;
         }
@@ -143,23 +169,27 @@ namespace CapybaraGame
 
         private Button Button(Transform parent, string title, int size, Color fill, UnityEngine.Events.UnityAction action, Vector2 min, Vector2 max)
         {
-            var go = new GameObject("Button", typeof(Image), typeof(Button));
+            var go = new GameObject("Button", typeof(Image), typeof(Button), typeof(Shadow));
             go.transform.SetParent(parent, false);
             var rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = min; rect.anchorMax = max;
-            rect.offsetMin = rect.offsetMax = Vector2.zero;
-            go.GetComponent<Image>().color = fill;
-            var button = go.GetComponent<Button>();
-            if (action != null) button.onClick.AddListener(action);
+            rect.anchorMin=min; rect.anchorMax=max; rect.offsetMin=rect.offsetMax=Vector2.zero;
+            var image=go.GetComponent<Image>();
+            image.color=fill; image.sprite=RoundedSprite();
+            var shadow=go.GetComponent<Shadow>();
+            shadow.effectColor=new Color(.15f,.12f,.10f,.10f); shadow.effectDistance=new Vector2(0,-3); shadow.useGraphicAlpha=true;
+            var button=go.GetComponent<Button>();
+            button.transition=Selectable.Transition.ColorTint;
+            button.colors=new ColorBlock{normalColor=fill,highlightedColor=Color.Lerp(fill,Color.white,.12f),pressedColor=Color.Lerp(fill,Color.black,.08f),selectedColor=fill,disabledColor=new Color(fill.r,fill.g,fill.b,.45f),colorMultiplier=1f};
+            button.navigation=new Navigation{mode=Navigation.Mode.None};
+            if(action!=null)button.onClick.AddListener(action);
 
-            var textObject = new GameObject("ButtonText", typeof(Text));
-            textObject.transform.SetParent(go.transform, false);
-            var tr = textObject.GetComponent<RectTransform>();
-            tr.anchorMin = Vector2.zero; tr.anchorMax = Vector2.one;
-            tr.offsetMin = new Vector2(12, 0); tr.offsetMax = new Vector2(-12, 0);
-            var t = textObject.GetComponent<Text>();
-            t.font = font; t.text = title; t.fontSize = size; t.alignment = TextAnchor.MiddleCenter; t.color = text;
-            t.raycastTarget = false;
+            var textObject=new GameObject("ButtonText",typeof(Text));
+            textObject.transform.SetParent(go.transform,false);
+            var tr=textObject.GetComponent<RectTransform>();
+            tr.anchorMin=Vector2.zero; tr.anchorMax=Vector2.one; tr.offsetMin=new Vector2(12,0); tr.offsetMax=new Vector2(-12,0);
+            var t=textObject.GetComponent<Text>();
+            t.font=font; t.text=title; t.fontSize=size; t.alignment=TextAnchor.MiddleCenter; t.color=text; t.fontStyle=FontStyle.Bold;
+            t.raycastTarget=false;
             spawned.Add(go);
             return button;
         }
@@ -167,19 +197,25 @@ namespace CapybaraGame
         private void ShowHome()
         {
             Clear();
-            var bg = Panel(canvas.transform, background, Vector2.zero, Vector2.one);
-            Label(bg.transform, "CAPYBARA", 64, TextAnchor.MiddleCenter, text, new Vector2(.08f,.86f), new Vector2(.92f,.97f));
-            Label(bg.transform, "A tiny puzzle. A big little world.", 28, TextAnchor.MiddleCenter, text, new Vector2(.08f,.80f), new Vector2(.92f,.86f));
-            Label(bg.transform, $"LEVEL {save.currentLevel}   •   UNLOCKED {save.unlockedLevel}   •   COINS {save.coins}", 26, TextAnchor.MiddleCenter, text, new Vector2(.04f,.72f), new Vector2(.96f,.79f));
+            var bg=Panel(canvas.transform,background,Vector2.zero,Vector2.one);
+            Label(bg.transform,"CAPYBARA",46,TextAnchor.MiddleCenter,text,new Vector2(.08f,.87f),new Vector2(.92f,.96f));
+            Label(bg.transform,"A tiny puzzle. A big little world.",22,TextAnchor.MiddleCenter,new Color(.40f,.35f,.31f),new Vector2(.08f,.82f),new Vector2(.92f,.87f));
 
-            Button(bg.transform, "PLAY", 44, new Color(.52f,.78f,.47f),
-                () => StartLevel(save.unlockedLevel), new Vector2(.08f,.58f), new Vector2(.92f,.68f));
-            Button(bg.transform, "LEVEL SELECT", 28, card, () => { levelSelectPage = Mathf.Max(0, (save.unlockedLevel - 1) / 40); ShowLevelSelect(); }, new Vector2(.08f,.41f), new Vector2(.92f,.47f));
+            var mascot=new GameObject("CapybaraMascot",typeof(RectTransform));
+            mascot.transform.SetParent(bg.transform,false);
+            var mr=mascot.GetComponent<RectTransform>();
+            mr.anchorMin=new Vector2(.30f,.59f); mr.anchorMax=new Vector2(.70f,.80f); mr.offsetMin=mr.offsetMax=Vector2.zero;
+            var face=mascot.AddComponent<CharacterFaceView>(); face.Build(CharacterId.Capybara,save.reducedMotion); face.SetVisible(true);
 
-            Button(bg.transform, "RULES", 26, card, ShowRules, new Vector2(.08f,.48f), new Vector2(.44f,.55f));
-            Button(bg.transform, "SETTINGS", 26, card, ShowSettings, new Vector2(.56f,.48f), new Vector2(.92f,.55f));
-            Label(bg.transform, "Progression is local and works offline.", 22, TextAnchor.MiddleCenter, text, new Vector2(.08f,.33f), new Vector2(.92f,.39f));
-            Label(bg.transform, $"Treats: {save.treats}", 28, TextAnchor.MiddleCenter, text, new Vector2(.08f,.25f), new Vector2(.92f,.32f));
+            Label(bg.transform,$"LEVEL {save.unlockedLevel}",24,TextAnchor.MiddleCenter,text,new Vector2(.08f,.53f),new Vector2(.42f,.58f));
+            Label(bg.transform,$"🪙 {save.coins}",24,TextAnchor.MiddleCenter,text,new Vector2(.58f,.53f),new Vector2(.92f,.58f));
+
+            Button(bg.transform,"PLAY",38,new Color(.55f,.78f,.48f),()=>StartLevel(save.unlockedLevel),new Vector2(.10f,.40f),new Vector2(.90f,.49f));
+            Button(bg.transform,"HOW TO PLAY",22,card,ShowRules,new Vector2(.10f,.31f),new Vector2(.48f,.37f));
+            Button(bg.transform,"SETTINGS",22,card,ShowSettings,new Vector2(.52f,.31f),new Vector2(.90f,.37f));
+
+            Label(bg.transform,$"{CharacterCatalog.ResourceIcon(characters.Active)}  {save.treats} {CharacterCatalog.ResourceName(characters.Active)}",21,TextAnchor.MiddleCenter,new Color(.40f,.35f,.31f),new Vector2(.10f,.21f),new Vector2(.90f,.27f));
+            Label(bg.transform,"Solve one puzzle. Win it. Move forward.",19,TextAnchor.MiddleCenter,new Color(.50f,.45f,.41f),new Vector2(.10f,.15f),new Vector2(.90f,.20f));
         }
 
         private void ShowLevelSelect()
@@ -247,35 +283,33 @@ namespace CapybaraGame
         private void BuildGameplay()
         {
             Clear();
-            var bg = Panel(canvas.transform, background, Vector2.zero, Vector2.one);
-            var puzzle = gameplay.Puzzle;
+            var bg=Panel(canvas.transform,background,Vector2.zero,Vector2.one);
+            var puzzle=gameplay.Puzzle;
 
-            Button(bg.transform, "←", 32, card, ShowLevelSelect, new Vector2(.05f,.92f), new Vector2(.16f,.98f));
-            Label(bg.transform, $"LEVEL {gameplay.LevelId}", 38, TextAnchor.MiddleCenter, text, new Vector2(.20f,.92f), new Vector2(.80f,.98f));
-            Button(bg.transform, "Ⅱ", 28, card, PauseGame, new Vector2(.84f,.92f), new Vector2(.95f,.98f));
+            Button(bg.transform,"Ⅱ",26,card,PauseGame,new Vector2(.06f,.92f),new Vector2(.16f,.97f));
+            Label(bg.transform,$"PUZZLE {gameplay.LevelId}",30,TextAnchor.MiddleCenter,text,new Vector2(.20f,.92f),new Vector2(.80f,.97f));
+            Label(bg.transform,$"{CharacterCatalog.ResourceIcon(gameplay.ActiveCharacter)}  {gameplay.State.livesRemaining} {CharacterCatalog.ResourceName(gameplay.ActiveCharacter)}",22,TextAnchor.MiddleCenter,new Color(.40f,.35f,.31f),new Vector2(.62f,.84f),new Vector2(.94f,.90f));
+            Label(bg.transform,$"{CharacterCatalog.Name(gameplay.ActiveCharacter)}  ·  {puzzle.difficultyBand}",20,TextAnchor.MiddleCenter,new Color(.48f,.42f,.38f),new Vector2(.06f,.84f),new Vector2(.60f,.90f));
 
-            Label(bg.transform, $"LIVES  {LifeText(gameplay.State.livesRemaining)}", 27, TextAnchor.MiddleCenter, text, new Vector2(.06f,.84f), new Vector2(.48f,.90f));
-            Label(bg.transform, $"{CharacterCatalog.Name(gameplay.ActiveCharacter)}  •  {puzzle.difficultyBand}", 23, TextAnchor.MiddleCenter, text, new Vector2(.50f,.84f), new Vector2(.94f,.90f));
-
-            var boardObject = new GameObject("Board", typeof(RectTransform));
-            boardObject.transform.SetParent(bg.transform, false);
-            var br = boardObject.GetComponent<RectTransform>();
-            br.anchorMin = new Vector2(.06f,.28f); br.anchorMax = new Vector2(.94f,.82f);
-            br.offsetMin = br.offsetMax = Vector2.zero;
-            board = boardObject.AddComponent<BoardView>();
-            board.Build(puzzle, regionColors, gameplay.ActiveCharacter, save.reducedMotion, OnCellTapped);
+            var boardObject=new GameObject("Board",typeof(RectTransform));
+            boardObject.transform.SetParent(bg.transform,false);
+            var br=boardObject.GetComponent<RectTransform>();
+            br.anchorMin=new Vector2(.06f,.29f); br.anchorMax=new Vector2(.94f,.82f); br.offsetMin=br.offsetMax=Vector2.zero;
+            board=boardObject.AddComponent<BoardView>();
+            board.Build(puzzle,regionColors,gameplay.ActiveCharacter,save.reducedMotion,OnCellMarked,OnCellDoubleTapped);
             board.Refresh(gameplay.State);
 
-            Button(bg.transform, "HINT", 24, card, () => UseHint(), new Vector2(.06f,.18f), new Vector2(.30f,.24f));
-            Button(bg.transform, "REVEAL", 24, card, () => UseReveal(), new Vector2(.35f,.18f), new Vector2(.65f,.24f));
-            Button(bg.transform, "EXTRA LIFE", 22, card, () => UseExtraLife(), new Vector2(.70f,.18f), new Vector2(.94f,.24f));
-            Label(bg.transform, $"COINS  {save.coins}", 22, TextAnchor.MiddleCenter, text, new Vector2(.08f,.08f), new Vector2(.92f,.13f));
+            Label(bg.transform,"TAP  ×",17,TextAnchor.MiddleCenter,new Color(.48f,.43f,.39f),new Vector2(.06f,.23f),new Vector2(.47f,.28f));
+            Label(bg.transform,"DOUBLE-TAP  PLACE",17,TextAnchor.MiddleCenter,new Color(.48f,.43f,.39f),new Vector2(.53f,.23f),new Vector2(.94f,.28f));
+            Button(bg.transform,"HINT  · 100",20,card,UseHint,new Vector2(.06f,.14f),new Vector2(.29f,.20f));
+            Button(bg.transform,"REVEAL  · 175",20,card,UseReveal,new Vector2(.385f,.14f),new Vector2(.615f,.20f));
+            Button(bg.transform,"EXTRA  · 250",20,card,UseExtraLife,new Vector2(.71f,.14f),new Vector2(.94f,.20f));
+            Label(bg.transform,$"🪙 {save.coins}",19,TextAnchor.MiddleCenter,new Color(.45f,.40f,.36f),new Vector2(.25f,.07f),new Vector2(.75f,.12f));
         }
 
         private static string LifeText(int lives)
         {
-            lives = Mathf.Clamp(lives, 0, 3);
-            return new string('♥', lives) + new string('♡', 3 - lives);
+            return Mathf.Clamp(lives,0,3).ToString();
         }
 
         private void OnGameplayEvent(GameplayEvent e)
@@ -303,23 +337,29 @@ namespace CapybaraGame
             }
         }
 
-        private void OnCellTapped(int row, int column)
+        private void OnCellMarked(int row,int column)
         {
-            if (gameplay.CurrentState != GameplayState.Playing) return;
-            gameplay.TapCell(row, column);
-            if (gameplay.CurrentState == GameplayState.Playing) RefreshGameplay();
+            if(gameplay.CurrentState!=GameplayState.Playing)return;
+            gameplay.MarkCell(row,column);
+            if(gameplay.CurrentState==GameplayState.Playing)RefreshGameplay();
+        }
+
+        private void OnCellDoubleTapped(int row,int column)
+        {
+            if(gameplay.CurrentState!=GameplayState.Playing)return;
+            gameplay.TapCell(row,column);
+            if(gameplay.CurrentState==GameplayState.Playing)RefreshGameplay();
         }
 
         private void RefreshGameplay()
         {
-            if (board == null || gameplay.State == null) return;
+            if(board==null||gameplay.State==null)return;
             board.Refresh(gameplay.State);
-            var livesLabel = FindObjectsOfType<Text>();
-            foreach (var t in livesLabel)
-            {
-                if (t.text != null && t.text.StartsWith("LIVES  "))
-                    t.text = $"LIVES  {LifeText(gameplay.State.livesRemaining)}";
-            }
+            var labels=FindObjectsOfType<Text>();
+            string target=$"{CharacterCatalog.ResourceIcon(gameplay.ActiveCharacter)}  {gameplay.State.livesRemaining} {CharacterCatalog.ResourceName(gameplay.ActiveCharacter)}";
+            foreach(var t in labels)
+                if(t.text!=null && (t.text.Contains("berries")||t.text.Contains("fish")||t.text.Contains("bones")||t.text.Contains("bamboo")))
+                    t.text=target;
         }
 
         private void OnCompleted(RewardResult reward)
@@ -338,26 +378,33 @@ namespace CapybaraGame
             ShowResult(false, RewardCalculator.CalculateFailure());
         }
 
-        private void ShowResult(bool solved, RewardResult reward)
+        private void ShowResult(bool solved,RewardResult reward)
         {
             Clear();
-            var bg = Panel(canvas.transform, background, Vector2.zero, Vector2.one);
-            Label(bg.transform, solved ? "🎉 COMPLETE" : "PUZZLE FAILED", 52, TextAnchor.MiddleCenter, text, new Vector2(.08f,.68f), new Vector2(.92f,.80f));
-            Label(bg.transform, solved
-                ? $"Remaining lives: {gameplay.State.livesRemaining}\n🍓 +{reward.Treats} Treats\n🪙 +{reward.Coins} Coins"
-                : "🍓 +0 Treats\n🪙 +0 Coins", 34, TextAnchor.MiddleCenter, text, new Vector2(.10f,.48f), new Vector2(.90f,.63f));
+            var bg=Panel(canvas.transform,background,Vector2.zero,Vector2.one);
+            var mascot=new GameObject("ResultFace",typeof(RectTransform));
+            mascot.transform.SetParent(bg.transform,false);
+            var mr=mascot.GetComponent<RectTransform>();
+            mr.anchorMin=new Vector2(.34f,.62f); mr.anchorMax=new Vector2(.66f,.80f); mr.offsetMin=mr.offsetMax=Vector2.zero;
+            var face=mascot.AddComponent<CharacterFaceView>(); face.Build(gameplay.ActiveCharacter,save.reducedMotion); face.SetVisible(true);
 
-            if (solved)
+            Label(bg.transform,solved?"PUZZLE SOLVED!":"TRY AGAIN",38,TextAnchor.MiddleCenter,text,new Vector2(.08f,.52f),new Vector2(.92f,.60f));
+            Label(bg.transform,solved
+                ? $"{CharacterCatalog.ResourceIcon(gameplay.ActiveCharacter)} +{reward.Treats} {CharacterCatalog.ResourceName(gameplay.ActiveCharacter)}\n🪙 +{reward.Coins} coins"
+                : $"No {CharacterCatalog.ResourceName(gameplay.ActiveCharacter)} left",25,TextAnchor.MiddleCenter,new Color(.40f,.35f,.31f),new Vector2(.10f,.41f),new Vector2(.90f,.51f));
+
+            if(solved)
             {
-                Button(bg.transform, gameplay.LevelId < 500 ? "CONTINUE" : "HOME", 36, new Color(.52f,.78f,.47f),
-                    () => { gameplay.Advance(); int next = LevelCatalog.NextLevel(gameplay.LevelId); if (next > 0 && ProgressionModel.IsUnlocked(save, next)) StartLevel(next); else ShowLevelSelect(); },
-                    new Vector2(.12f,.30f), new Vector2(.88f,.39f));
+                Button(bg.transform,gameplay.LevelId<500?"NEXT PUZZLE":"ALL PUZZLES COMPLETE",34,new Color(.55f,.78f,.48f),()=>{
+                    gameplay.Advance();
+                    int next=LevelCatalog.NextLevel(gameplay.LevelId);
+                    if(next>0)StartLevel(next); else ShowHome();
+                },new Vector2(.10f,.27f),new Vector2(.90f,.36f));
             }
             else
             {
-                Button(bg.transform, "RETRY", 34, new Color(.52f,.78f,.47f),
-                    () => StartLevel(gameplay.LevelId), new Vector2(.12f,.31f), new Vector2(.88f,.39f));
-                Button(bg.transform, "HOME", 28, card, ShowHome, new Vector2(.25f,.20f), new Vector2(.75f,.27f));
+                Button(bg.transform,"RETRY PUZZLE",32,new Color(.55f,.78f,.48f),()=>StartLevel(gameplay.LevelId),new Vector2(.10f,.28f),new Vector2(.90f,.37f));
+                Button(bg.transform,"HOME",22,card,ShowHome,new Vector2(.28f,.18f),new Vector2(.72f,.24f));
             }
         }
 
@@ -365,11 +412,11 @@ namespace CapybaraGame
         {
             gameplay.Pause();
             Clear();
-            var bg = Panel(canvas.transform, background, Vector2.zero, Vector2.one);
-            Label(bg.transform, "PAUSED", 52, TextAnchor.MiddleCenter, text, new Vector2(.08f,.70f), new Vector2(.92f,.80f));
-            Button(bg.transform, "RESUME", 34, new Color(.52f,.78f,.47f), () => { gameplay.Resume(); BuildGameplay(); }, new Vector2(.12f,.52f), new Vector2(.88f,.61f));
-            Button(bg.transform, "RESTART", 30, card, () => { gameplay.Restart(); BuildGameplay(); }, new Vector2(.12f,.41f), new Vector2(.88f,.49f));
-            Button(bg.transform, "EXIT", 30, card, () => { gameplay.Exit(); ShowHome(); }, new Vector2(.12f,.30f), new Vector2(.88f,.38f));
+            var bg=Panel(canvas.transform,background,Vector2.zero,Vector2.one);
+            Label(bg.transform,"PAUSED",40,TextAnchor.MiddleCenter,text,new Vector2(.08f,.68f),new Vector2(.92f,.76f));
+            Button(bg.transform,"RESUME",32,new Color(.55f,.78f,.48f),()=>{gameplay.Resume();BuildGameplay();},new Vector2(.10f,.52f),new Vector2(.90f,.61f));
+            Button(bg.transform,"RESTART PUZZLE",28,card,()=>{gameplay.Restart();BuildGameplay();},new Vector2(.10f,.41f),new Vector2(.90f,.49f));
+            Button(bg.transform,"HOME",24,card,()=>{gameplay.Exit();ShowHome();},new Vector2(.22f,.28f),new Vector2(.78f,.35f));
         }
 
         private void UseHint()
