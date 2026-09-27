@@ -38,6 +38,18 @@ namespace CapybaraGame.Gameplay
         public void TapCell(int row,int column){if(CurrentState!=GameplayState.Playing||Puzzle==null||State==null||!Puzzle.IsInBounds(row,column))return;Raise(GameplayEventType.CellSelected,row,column,State.livesRemaining);Raise(GameplayEventType.MoveAttempted,row,column,State.livesRemaining);int index=row*Puzzle.columns+column;if(State.placed[index]!=-1){State.placed[index]=-1;Raise(GameplayEventType.CharacterRemoved,row,column,State.livesRemaining);StateChanged?.Invoke();return;}if(!PuzzleValidator.IsPlacementValid(Puzzle,State.placed,row,column)){State.livesRemaining=Math.Max(0,State.livesRemaining-1);Raise(GameplayEventType.MoveIncorrect,row,column,State.livesRemaining);Raise(GameplayEventType.LifeLost,row,column,State.livesRemaining);StateChanged?.Invoke();if(State.livesRemaining==0){State.status=PuzzleStatus.Failed;CurrentState=GameplayState.Failed;Raise(GameplayEventType.PuzzleFailed,row,column,0);Failed?.Invoke();}return;}State.placed[index]=(int)ActiveCharacter;
         State.marks[index]=false;Raise(GameplayEventType.MoveCorrect,row,column,State.livesRemaining);Raise(GameplayEventType.CharacterPlaced,row,column,State.livesRemaining);StateChanged?.Invoke();if(PuzzleValidator.IsSolved(Puzzle,State.placed))Complete();}
         private void Complete(){if(CurrentState!=GameplayState.Playing)return;State.status=PuzzleStatus.Solved;CurrentState=GameplayState.Completed;LastReward=RewardCalculator.CalculateCompletion(State.livesRemaining,LevelRewardConfig.Default);Raise(GameplayEventType.PuzzleCompleted,-1,-1,State.livesRemaining);Completed?.Invoke(LastReward);}
+        public bool ReviveWithBerry()
+        {
+            if (CurrentState != GameplayState.Failed || State == null || State.livesRemaining > 0) return false;
+            State.livesRemaining = 1;
+            State.status = PuzzleStatus.Playing;
+            CurrentState = GameplayState.Playing;
+            UnityEngine.Time.timeScale = 1f;
+            Raise(GameplayEventType.PuzzleStarted, -1, -1, 1);
+            StateChanged?.Invoke();
+            return true;
+        }
+
         public void Pause(){if(CurrentState!=GameplayState.Playing)return;CurrentState=GameplayState.Paused;UnityEngine.Time.timeScale=0f;}
         public void Resume(){if(CurrentState!=GameplayState.Paused)return;CurrentState=GameplayState.Playing;UnityEngine.Time.timeScale=1f;}
         public void Restart(){if(Puzzle==null)return;UnityEngine.Time.timeScale=1f;LoadLevel(LevelId,ActiveCharacter);}
