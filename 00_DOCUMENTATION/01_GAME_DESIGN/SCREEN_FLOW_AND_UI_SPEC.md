@@ -10,12 +10,18 @@ The reference is inspiration only. All production art must be original and must 
 
 BOOT
 → HOME
-→ choose:
-- PLAY / PROGRESSION
-- DAILY
-- SHOP
-- LEADERBOARD
-- PROFILE
+→ PLAY CURRENT LEVEL
+→ LEVEL READY
+→ PLAYING
+→ RESULT
+→ NEXT LEVEL
+
+Secondary screens:
+- STORE
+- HOW TO PLAY
+- SETTINGS
+
+Daily/competitive screens are reserved for their later feature phases.
 
 ### Progression
 HOME
@@ -64,30 +70,28 @@ HOME
 - Daily Puzzle card
 - Weekly leaderboard preview
 
-### Bottom navigation
-Home | Daily | Shop | Leaderboard | Profile
+### Navigation
+Launch UI keeps the progression loop focused:
+- Play current level
+- Store
+- How To Play
+- Settings
 
-### Interaction priorities
-1. Continue progression
-2. Daily Puzzle
-3. Collection
-4. Competition
+Daily, leaderboard and profile navigation are added in their respective feature phases rather than crowding the initial progression loop.
 
 Do not overcrowd the home screen.
 
-## 3. Progression Map
+## 3. Sequential Progression
 
-Use a vertical path of level nodes.
+There is no player-facing level-select screen or progression map.
 
-Node states:
-- completed
-- current
-- locked
-- Hard Challenge
+The player:
+1. plays the currently unlocked level
+2. completes or fails it
+3. on completion advances to the next level
+4. can never jump to another level from a selector
 
-Every 10th node receives a stronger visual treatment and "HARD" marker.
-
-The map is a presentation layer only. Puzzle rules do not change.
+Every 10th level receives Hard Challenge presentation while remaining part of the same sequential flow.
 
 ## 4. Level Ready Screen
 
@@ -124,6 +128,7 @@ Do not add tutorial copy once the player has demonstrated understanding.
 
 ### Bottom action row
 No purchasing or aid controls during active play.
+Only instructional feedback and the coin balance may appear.
 
 Aids are purchased in the Store before the puzzle starts and may be prepared on the Level Ready screen.
 
