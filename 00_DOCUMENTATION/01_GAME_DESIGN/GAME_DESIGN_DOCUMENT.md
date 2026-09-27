@@ -25,7 +25,7 @@ HOME → PROFILE
 
 ## Puzzle states
 
-READY: board visible, 3 lives.
+READY: board visible, 3 character-specific mistake tokens.
 PLAYING: input accepted.
 ERROR: invalid placement feedback; life decremented.
 SOLVED: all constraints satisfied.
@@ -35,9 +35,10 @@ RESULTS: completion summary.
 
 ## Input rules
 
-Empty valid cell: place.
-Empty invalid cell: reject placement and consume one life.
-Occupied cell: remove.
+Empty cell: single tap toggles an X marker.
+Empty cell: double-tap attempts placement.
+Occupied character: tap removes it.
+Invalid double-tap placement: consume one character-specific mistake token.
 Input during transition/celebration: ignored.
 
 ## Rewards
