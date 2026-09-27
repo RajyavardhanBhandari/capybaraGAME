@@ -16,21 +16,41 @@ namespace CapybaraGame.Puzzle
 
             if (cache.TryGetValue(level, out var cached)) return cached.Clone();
 
-            var result = PuzzleGenerator.Generate(definition.CreatePuzzleConfig());
-            if (result.Puzzle == null)
+            PuzzleGenerationResult result = null;
+            PuzzleDefinition selected = null;
+            for (int attempt = 0; attempt < 6; attempt++)
+            {
+                var config = definition.CreatePuzzleConfig();
+                config.seed = definition.Seed + attempt * 7919;
+                result = PuzzleGenerator.Generate(config);
+                if (result.Puzzle == null) continue;
+                if (!PuzzleExperienceLibrary.IsTooSimilar(result.Puzzle) || attempt == 5)
+                {
+                    selected = result.Puzzle;
+                    break;
+                }
+            }
+
+            if (selected == null)
             {
                 var fallback = definition.CreatePuzzleConfig();
                 fallback.targetBand = null;
                 result = PuzzleGenerator.Generate(fallback);
+                selected = result.Puzzle;
             }
 
-            if (result.Puzzle == null)
+            if (selected == null)
                 throw new InvalidOperationException("Production puzzle generation failed for level " + level + ": " + result.FailureReason);
 
-            result.Puzzle.id = "P" + level.ToString("000");
-            result.Puzzle.isHardChallenge = definition.IsHardChallenge;
-            cache[level] = result.Puzzle;
-            return result.Puzzle.Clone();
+            selected.id = "P" + level.ToString("000");
+            selected.isHardChallenge = definition.IsHardChallenge;
+            var quality = PuzzleDifficultyEvaluator.Evaluate(selected);
+            selected.difficulty = quality.Score;
+            selected.difficultyBand = quality.Band.ToString();
+            selected.fingerprint = PuzzleFingerprint.Compute(selected);
+            cache[level] = selected;
+            PuzzleExperienceLibrary.Remember(selected);
+            return selected.Clone();
         }
 
         public static void ClearCache() => cache.Clear();
