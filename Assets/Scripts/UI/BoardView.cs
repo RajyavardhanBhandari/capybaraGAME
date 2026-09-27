@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using CapybaraGame.Core;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 namespace CapybaraGame.UI
 {
-    public sealed class BoardCellView : MonoBehaviour
+    public sealed class BoardCellView : MonoBehaviour, IPointerClickHandler
     {
         private int row;
         private int column;
@@ -16,12 +17,15 @@ namespace CapybaraGame.UI
         private readonly Image[] edges = new Image[4];
         private Button button;
         private Action<int, int> clicked;
+        private Action<int, int> doubleClicked;
+        private CharacterFaceView face;
 
-        public void Initialize(int r, int c, Action<int, int> onClick)
+        public void Initialize(int r, int c, Action<int, int> onClick, Action<int, int> onDoubleClick)
         {
             row = r;
             column = c;
             clicked = onClick;
+            doubleClicked = onDoubleClick;
             background = gameObject.GetComponent<Image>() ?? gameObject.AddComponent<Image>();
             button = gameObject.GetComponent<Button>() ?? gameObject.AddComponent<Button>();
             button.transition = Selectable.Transition.ColorTint;
@@ -31,6 +35,16 @@ namespace CapybaraGame.UI
             outline = gameObject.GetComponent<Outline>() ?? gameObject.AddComponent<Outline>();
             outline.effectDistance = new Vector2(1f, -1f);
             outline.effectColor = new Color(0.18f, 0.15f, 0.14f, 0.08f);
+
+            var faceObject = new GameObject("AnimalFace", typeof(RectTransform));
+            faceObject.transform.SetParent(transform, false);
+            var faceRect = faceObject.GetComponent<RectTransform>();
+            faceRect.anchorMin = Vector2.zero;
+            faceRect.anchorMax = Vector2.one;
+            faceRect.offsetMin = faceRect.offsetMax = Vector2.zero;
+            face = faceObject.AddComponent<CharacterFaceView>();
+            face.Build(CharacterId.Capybara, false);
+            face.SetVisible(false);
 
             var labelObject = new GameObject("Character", typeof(Text));
             labelObject.transform.SetParent(transform, false);
@@ -43,13 +57,21 @@ namespace CapybaraGame.UI
             mark.alignment = TextAnchor.MiddleCenter;
             mark.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             mark.fontSize = 26;
-            mark.color = Color.white;
+            mark.color = new Color(.30f, .28f, .27f, .60f);
+            mark.fontStyle = FontStyle.Bold;
             mark.raycastTarget = false;
 
             CreateEdge("Top", 0, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, -2), new Vector2(0, 0));
             CreateEdge("Right", 1, new Vector2(1, 0), new Vector2(1, 1), new Vector2(-2, 0), new Vector2(0, 0));
             CreateEdge("Bottom", 2, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 0), new Vector2(0, 2));
             CreateEdge("Left", 3, new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0), new Vector2(2, 0));
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData == null) return;
+            if (eventData.clickCount >= 2) doubleClicked?.Invoke(row, column);
+            else clicked?.Invoke(row, column);
         }
 
         private void CreateEdge(string name, int index, Vector2 min, Vector2 max, Vector2 offsetMin, Vector2 offsetMax)
@@ -67,13 +89,16 @@ namespace CapybaraGame.UI
             edges[index] = image;
         }
 
-        public void Refresh(PuzzleDefinition puzzle, PuzzleState state, CharacterId active, Color regionColor, bool selected, bool feedbackError)
+        public void Refresh(PuzzleDefinition puzzle, PuzzleState state, CharacterId active, Color regionColor, bool selected, bool feedbackError, bool reducedMotion)
         {
             background.color = regionColor;
             int index = row * puzzle.columns + column;
             bool occupied = state.placed[index] != -1;
-            mark.text = occupied ? CharacterCatalog.Symbol(active) : string.Empty;
-            mark.fontSize = occupied ? Mathf.Max(18, 150 / puzzle.rows) : 26;
+            bool marked = state.marks != null && state.marks[index];
+            face.Configure(active, reducedMotion);
+            face.SetVisible(occupied);
+            mark.text = marked && !occupied ? "×" : string.Empty;
+            mark.fontSize = Mathf.Max(24, 110 / puzzle.rows);
             outline.effectColor = selected
                 ? new Color(0.10f, 0.10f, 0.10f, 0.70f)
                 : feedbackError
@@ -145,13 +170,17 @@ namespace CapybaraGame.UI
         private CharacterId activeCharacter;
         private int selectedIndex = -1;
         private bool reducedMotion;
+        private Action<int, int> onTap;
+        private Action<int, int> onDoubleTap;
 
-        public void Build(PuzzleDefinition definition, Color[] colors, CharacterId character, bool reduced, Action<int, int> click)
+        public void Build(PuzzleDefinition definition, Color[] colors, CharacterId character, bool reduced, Action<int, int> tap, Action<int, int> doubleTap)
         {
             puzzle = definition;
             regionColors = colors;
             activeCharacter = character;
             reducedMotion = reduced;
+            onTap = tap;
+            onDoubleTap = doubleTap;
             rect = GetComponent<RectTransform>() ?? gameObject.AddComponent<RectTransform>();
             grid = GetComponent<GridLayoutGroup>() ?? gameObject.AddComponent<GridLayoutGroup>();
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
@@ -172,10 +201,10 @@ namespace CapybaraGame.UI
             {
                 for (int c = 0; c < puzzle.columns; c++)
                 {
-                    var cellObject = new GameObject($"Cell_{r}_{c}", typeof(RectTransform), typeof(Image), typeof(Button));
+                    var cellObject = new GameObject($"Cell_{r}_{c}", typeof(RectTransform), typeof(Image));
                     cellObject.transform.SetParent(transform, false);
                     var view = cellObject.AddComponent<BoardCellView>();
-                    view.Initialize(r, c, click);
+                    view.Initialize(r, c, onTap, onDoubleTap);
                     cells.Add(view);
                 }
             }
@@ -190,7 +219,7 @@ namespace CapybaraGame.UI
             {
                 int r = i / puzzle.columns;
                 int c = i % puzzle.columns;
-                cells[i].Refresh(puzzle, state, activeCharacter, regionColors[puzzle.RegionAt(r, c) % regionColors.Length], i == selectedIndex, false);
+                cells[i].Refresh(puzzle, state, activeCharacter, regionColors[puzzle.RegionAt(r, c) % regionColors.Length], i == selectedIndex, false, reducedMotion);
             }
         }
 
