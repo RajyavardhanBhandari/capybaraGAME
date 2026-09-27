@@ -15,7 +15,6 @@ namespace CapybaraGame.UI
         private Text mark;
         private Outline outline;
         private readonly Image[] edges = new Image[4];
-        private Button button;
         private Action<int, int> clicked;
         private Action<int, int> doubleClicked;
         private CharacterFaceView face;
@@ -27,11 +26,6 @@ namespace CapybaraGame.UI
             clicked = onClick;
             doubleClicked = onDoubleClick;
             background = gameObject.GetComponent<Image>() ?? gameObject.AddComponent<Image>();
-            button = gameObject.GetComponent<Button>() ?? gameObject.AddComponent<Button>();
-            button.transition = Selectable.Transition.ColorTint;
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() => clicked?.Invoke(row, column));
-
             outline = gameObject.GetComponent<Outline>() ?? gameObject.AddComponent<Outline>();
             outline.effectDistance = new Vector2(1f, -1f);
             outline.effectColor = new Color(0.18f, 0.15f, 0.14f, 0.08f);
@@ -188,12 +182,12 @@ namespace CapybaraGame.UI
             grid.spacing = new Vector2(3f, 3f);
             grid.padding = new RectOffset(2, 2, 2, 2);
             grid.childAlignment = TextAnchor.MiddleCenter;
-            RebuildCells(click);
+            RebuildCells();
             Canvas.ForceUpdateCanvases();
             LayoutCells();
         }
 
-        private void RebuildCells(Action<int, int> click)
+        private void RebuildCells()
         {
             foreach (Transform child in transform) Destroy(child.gameObject);
             cells.Clear();
