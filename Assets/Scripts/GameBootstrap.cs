@@ -166,11 +166,10 @@ namespace CapybaraGame
             Clear();
             var bg = Panel(canvas.transform, background, Vector2.zero, Vector2.one);
             Label(bg.transform, "LEVEL SELECT", 50, TextAnchor.MiddleCenter, text, new Vector2(.06f,.88f), new Vector2(.94f,.96f));
-            Label(bg.transform, $"COMPLETED  {ProgressionModel.GetCompletedCount(save)} / {LevelCatalog.MaxLevel}    PAGE {levelSelectPage + 1}/{pageCount}", 22, TextAnchor.MiddleCenter, text, new Vector2(.04f,.83f), new Vector2(.96f,.88f));
-
             const int columns = 4;
             const int pageSize = 40;
             int pageCount = (LevelCatalog.MaxLevel + pageSize - 1) / pageSize;
+            Label(bg.transform, $"COMPLETED  {ProgressionModel.GetCompletedCount(save)} / {LevelCatalog.MaxLevel}    PAGE {levelSelectPage + 1}/{pageCount}", 22, TextAnchor.MiddleCenter, text, new Vector2(.04f,.83f), new Vector2(.96f,.88f));
             levelSelectPage = Mathf.Clamp(levelSelectPage, 0, pageCount - 1);
             int firstLevel = levelSelectPage * pageSize + 1;
             for (int i = 0; i < pageSize; i++)
