@@ -36,6 +36,9 @@ namespace CapybaraGame
         private Font font;
         private Sprite roundedSprite;
         private readonly System.Collections.Generic.List<GameObject> spawned = new System.Collections.Generic.List<GameObject>();
+        private bool pendingHint;
+        private bool pendingReveal;
+        private const int BerryReviveCost = 500;
         private readonly Color background = new Color(.965f, .945f, .925f);
         private readonly Color card = new Color(1f, .985f, .965f);
         private readonly Color text = new Color(.18f, .15f, .14f);
@@ -210,11 +213,93 @@ namespace CapybaraGame
             Label(bg.transform,$"COINS {save.coins}",24,TextAnchor.MiddleCenter,text,new Vector2(.58f,.53f),new Vector2(.92f,.58f));
 
             Button(bg.transform,"PLAY",38,new Color(.55f,.78f,.48f),()=>StartLevel(save.unlockedLevel),new Vector2(.10f,.40f),new Vector2(.90f,.49f));
-            Button(bg.transform,"HOW TO PLAY",22,card,ShowRules,new Vector2(.10f,.31f),new Vector2(.48f,.37f));
-            Button(bg.transform,"SETTINGS",22,card,ShowSettings,new Vector2(.52f,.31f),new Vector2(.90f,.37f));
+            Button(bg.transform,"STORE",22,card,ShowStore,new Vector2(.10f,.31f),new Vector2(.31f,.37f));
+            Button(bg.transform,"HOW TO PLAY",22,card,ShowRules,new Vector2(.34f,.31f),new Vector2(.56f,.37f));
+            Button(bg.transform,"SETTINGS",22,card,ShowSettings,new Vector2(.59f,.31f),new Vector2(.90f,.37f));
 
             Label(bg.transform,$"{CharacterCatalog.ResourceIcon(characters.Active)}  {save.treats} {CharacterCatalog.ResourceName(characters.Active)}",21,TextAnchor.MiddleCenter,new Color(.40f,.35f,.31f),new Vector2(.10f,.21f),new Vector2(.90f,.27f));
             Label(bg.transform,"Solve one puzzle. Win it. Move forward.",19,TextAnchor.MiddleCenter,new Color(.50f,.45f,.41f),new Vector2(.10f,.15f),new Vector2(.90f,.20f));
+        }
+
+        private void ShowStore()
+        {
+            Clear();
+            var bg=Panel(canvas.transform,background,Vector2.zero,Vector2.one);
+            Label(bg.transform,"STORE",46,TextAnchor.MiddleCenter,text,new Vector2(.08f,.89f),new Vector2(.92f,.96f));
+            Label(bg.transform,"Characters",25,TextAnchor.MiddleLeft,text,new Vector2(.08f,.82f),new Vector2(.92f,.87f));
+
+            var ids=CharacterCatalog.All;
+            for(int i=0;i<ids.Length;i++)
+            {
+                var id=ids[i];
+                float x0=.07f+i*.185f, x1=x0+.17f;
+                var cardObject=Panel(bg.transform,card,new Vector2(x0,.60f),new Vector2(x1,.80f));
+                var faceObject=new GameObject("StoreFace",typeof(RectTransform));
+                faceObject.transform.SetParent(cardObject.transform,false);
+                var fr=faceObject.GetComponent<RectTransform>();
+                fr.anchorMin=new Vector2(.18f,.35f); fr.anchorMax=new Vector2(.82f,.95f); fr.offsetMin=fr.offsetMax=Vector2.zero;
+                var face=faceObject.AddComponent<CharacterFaceView>();
+                face.Build(id,save.reducedMotion); face.SetVisible(true);
+
+                bool owned=characters.IsOwned(id,save);
+                int price=CharacterStorePrice(id);
+                string title=owned ? (characters.Active==id ? "EQUIPPED" : "USE") : price.ToString();
+                Color fill=owned ? new Color(.84f,.92f,.78f) : new Color(.96f,.84f,.54f);
+                Button(cardObject.transform,title,16,fill,()=>{
+                    if(characters.IsOwned(id,save)) { characters.Select(id,save); ShowStore(); }
+                    else if(save.coins>=price) { save.coins-=price; save.ownedCharacters.Add((int)id); characters.Select(id,save); SaveService.Save(save); ShowStore(); }
+                },new Vector2(.08f,.05f),new Vector2(.92f,.30f));
+            }
+
+            Label(bg.transform,"Aids",25,TextAnchor.MiddleLeft,text,new Vector2(.08f,.53f),new Vector2(.92f,.58f));
+            Label(bg.transform,$"Hint  ·  100 coins  ·  OWNED {save.hintAids}",21,TextAnchor.MiddleLeft,new Color(.40f,.35f,.31f),new Vector2(.10f,.45f),new Vector2(.72f,.50f));
+            Button(bg.transform,"BUY 1",19,new Color(.84f,.92f,.78f),()=>{if(save.coins>=100){save.coins-=100;save.hintAids++;SaveService.Save(save);ShowStore();}},new Vector2(.75f,.45f),new Vector2(.90f,.50f));
+            Label(bg.transform,$"Reveal  ·  175 coins  ·  OWNED {save.revealAids}",21,TextAnchor.MiddleLeft,new Color(.40f,.35f,.31f),new Vector2(.10f,.37f),new Vector2(.72f,.42f));
+            Button(bg.transform,"BUY 1",19,new Color(.84f,.92f,.78f),()=>{if(save.coins>=175){save.coins-=175;save.revealAids++;SaveService.Save(save);ShowStore();}},new Vector2(.75f,.37f),new Vector2(.90f,.42f));
+            Label(bg.transform,"Aids are purchased here before a puzzle. Nothing can be bought during active play.",17,TextAnchor.MiddleCenter,new Color(.50f,.45f,.41f),new Vector2(.08f,.28f),new Vector2(.92f,.34f));
+            Label(bg.transform,$"COINS {save.coins}",22,TextAnchor.MiddleCenter,text,new Vector2(.25f,.20f),new Vector2(.75f,.26f));
+            Button(bg.transform,"BACK",26,card,ShowHome,new Vector2(.18f,.09f),new Vector2(.82f,.16f));
+        }
+
+        private int CharacterStorePrice(CharacterId id)
+        {
+            switch(id)
+            {
+                case CharacterId.Cat: return 750;
+                case CharacterId.Dog: return 1500;
+                case CharacterId.Penguin: return 2000;
+                case CharacterId.Panda: return 3000;
+                default: return 0;
+            }
+        }
+
+        private void ShowLevelReady()
+        {
+            Clear();
+            var bg=Panel(canvas.transform,background,Vector2.zero,Vector2.one);
+            var faceObject=new GameObject("ReadyFace",typeof(RectTransform));
+            faceObject.transform.SetParent(bg.transform,false);
+            var fr=faceObject.GetComponent<RectTransform>();
+            fr.anchorMin=new Vector2(.34f,.62f); fr.anchorMax=new Vector2(.66f,.82f); fr.offsetMin=fr.offsetMax=Vector2.zero;
+            var face=faceObject.AddComponent<CharacterFaceView>(); face.Build(gameplay.ActiveCharacter,save.reducedMotion); face.SetVisible(true);
+
+            Label(bg.transform,$"PUZZLE {gameplay.LevelId}",36,TextAnchor.MiddleCenter,text,new Vector2(.08f,.54f),new Vector2(.92f,.61f));
+            Label(bg.transform,$"{CharacterCatalog.ResourceIcon(gameplay.ActiveCharacter)}  3 {CharacterCatalog.ResourceName(gameplay.ActiveCharacter)}",22,TextAnchor.MiddleCenter,new Color(.40f,.35f,.31f),new Vector2(.10f,.47f),new Vector2(.90f,.52f));
+
+            if(save.hintAids>0 || save.revealAids>0)
+            {
+                Label(bg.transform,$"AIDS READY   HINT {save.hintAids}   REVEAL {save.revealAids}",19,TextAnchor.MiddleCenter,new Color(.45f,.40f,.36f),new Vector2(.10f,.38f),new Vector2(.90f,.43f));
+                Button(bg.transform,pendingHint?"HINT READY":"USE HINT",19,pendingHint?new Color(.55f,.78f,.48f):card,()=>{
+                    if(!pendingHint && save.hintAids>0){save.hintAids--;pendingHint=true;SaveService.Save(save);ShowLevelReady();}
+                },new Vector2(.10f,.30f),new Vector2(.43f,.36f));
+                Button(bg.transform,pendingReveal?"REVEAL READY":"USE REVEAL",19,pendingReveal?new Color(.55f,.78f,.48f):card,()=>{
+                    if(!pendingReveal && save.revealAids>0){save.revealAids--;pendingReveal=true;SaveService.Save(save);ShowLevelReady();}
+                },new Vector2(.57f,.30f),new Vector2(.90f,.36f));
+            }
+
+            Button(bg.transform,"PLAY PUZZLE",34,new Color(.55f,.78f,.48f),BeginLevel,new Vector2(.10f,.19f),new Vector2(.90f,.28f));
+            Button(bg.transform,"STORE",20,card,ShowStore,new Vector2(.10f,.10f),new Vector2(.43f,.16f));
+            Button(bg.transform,"BACK",20,card,ShowHome,new Vector2(.57f,.10f),new Vector2(.90f,.16f));
         }
 
         private void ShowRules()
@@ -240,10 +325,30 @@ namespace CapybaraGame
         private void StartLevel(int level)
         {
             if (!ProgressionModel.IsUnlocked(save, level)) level = save.unlockedLevel;
-            save.currentLevel = level;
+            pendingHint=false;
+            pendingReveal=false;
+            save.currentLevel=level;
             SaveService.Save(save);
-            gameplay.LoadLevel(level, characters.Active);
+            gameplay.LoadLevel(level,characters.Active);
+            ShowLevelReady();
+        }
+
+        private void BeginLevel()
+        {
+            if(gameplay.Puzzle==null)return;
             BuildGameplay();
+            if(pendingHint && gameplay.TryGetSolutionCell(out var hintRow,out var hintCol))
+            {
+                board.SetSelected(hintRow,hintCol);
+                board.Refresh(gameplay.State);
+            }
+            if(pendingReveal && gameplay.TryGetSolutionCell(out var revealRow,out var revealCol))
+            {
+                gameplay.TapCell(revealRow,revealCol);
+                if(gameplay.CurrentState==GameplayState.Playing)RefreshGameplay();
+            }
+            pendingHint=false;
+            pendingReveal=false;
         }
 
         private void BuildGameplay()
@@ -267,9 +372,7 @@ namespace CapybaraGame
 
             Label(bg.transform,"TAP  ×",17,TextAnchor.MiddleCenter,new Color(.48f,.43f,.39f),new Vector2(.06f,.23f),new Vector2(.47f,.28f));
             Label(bg.transform,"DOUBLE-TAP  PLACE",17,TextAnchor.MiddleCenter,new Color(.48f,.43f,.39f),new Vector2(.53f,.23f),new Vector2(.94f,.28f));
-            Button(bg.transform,"HINT  · 100",20,card,UseHint,new Vector2(.06f,.14f),new Vector2(.29f,.20f));
-            Button(bg.transform,"REVEAL  · 175",20,card,UseReveal,new Vector2(.385f,.14f),new Vector2(.615f,.20f));
-            Button(bg.transform,"MORE  · 250",20,card,UseExtraToken,new Vector2(.71f,.14f),new Vector2(.94f,.20f));
+            Label(bg.transform,"AIDS ARE LOCKED DURING PLAY",17,TextAnchor.MiddleCenter,new Color(.50f,.45f,.41f),new Vector2(.08f,.14f),new Vector2(.92f,.19f));
             Label(bg.transform,$"COINS {save.coins}",19,TextAnchor.MiddleCenter,new Color(.45f,.40f,.36f),new Vector2(.25f,.07f),new Vector2(.75f,.12f));
         }
 
@@ -354,10 +457,10 @@ namespace CapybaraGame
             mr.anchorMin=new Vector2(.34f,.62f); mr.anchorMax=new Vector2(.66f,.80f); mr.offsetMin=mr.offsetMax=Vector2.zero;
             var face=mascot.AddComponent<CharacterFaceView>(); face.Build(gameplay.ActiveCharacter,save.reducedMotion); face.SetVisible(true);
 
-            Label(bg.transform,solved?"PUZZLE SOLVED!":"TRY AGAIN",38,TextAnchor.MiddleCenter,text,new Vector2(.08f,.52f),new Vector2(.92f,.60f));
+            Label(bg.transform,solved?"PUZZLE SOLVED!":"OUT OF "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter).ToUpper(),38,TextAnchor.MiddleCenter,text,new Vector2(.06f,.52f),new Vector2(.94f,.60f));
             Label(bg.transform,solved
-                ? $"{CharacterCatalog.ResourceIcon(gameplay.ActiveCharacter)} +{reward.Treats} {CharacterCatalog.ResourceName(gameplay.ActiveCharacter)}\n🪙 +{reward.Coins} coins"
-                : $"No {CharacterCatalog.ResourceName(gameplay.ActiveCharacter)} left",25,TextAnchor.MiddleCenter,new Color(.40f,.35f,.31f),new Vector2(.10f,.41f),new Vector2(.90f,.51f));
+                ? $"{CharacterCatalog.ResourceIcon(gameplay.ActiveCharacter)} +{reward.Treats} {CharacterCatalog.ResourceName(gameplay.ActiveCharacter)}\nCOINS +{reward.Coins}"
+                : $"This attempt is over.",25,TextAnchor.MiddleCenter,new Color(.40f,.35f,.31f),new Vector2(.10f,.41f),new Vector2(.90f,.51f));
 
             if(solved)
             {
@@ -369,9 +472,24 @@ namespace CapybaraGame
             }
             else
             {
-                Button(bg.transform,"RETRY PUZZLE",32,new Color(.55f,.78f,.48f),()=>StartLevel(gameplay.LevelId),new Vector2(.10f,.28f),new Vector2(.90f,.37f));
-                Button(bg.transform,"HOME",22,card,ShowHome,new Vector2(.28f,.18f),new Vector2(.72f,.24f));
+                Button(bg.transform,"WATCH AD  +1 "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter).ToUpper(),21,new Color(.55f,.78f,.48f),TryRewardedBerry,new Vector2(.08f,.29f),new Vector2(.92f,.36f));
+                Button(bg.transform,"BUY 1 "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter).ToUpper()+"  ·  "+BerryReviveCost,21,new Color(.96f,.84f,.54f),BuyBerryRevive,new Vector2(.08f,.20f),new Vector2(.92f,.27f));
+                Button(bg.transform,"RETRY PUZZLE",24,card,()=>StartLevel(gameplay.LevelId),new Vector2(.22f,.10f),new Vector2(.78f,.16f));
             }
+        }
+
+        private void TryRewardedBerry()
+        {
+            // Rewarded-ad SDK is intentionally isolated for Phase 12. Do not fake a completed ad in production.
+            Debug.Log("Rewarded ad requested: grant exactly one berry after the ad provider confirms completion.");
+        }
+
+        private void BuyBerryRevive()
+        {
+            if(save.coins<BerryReviveCost)return;
+            save.coins-=BerryReviveCost;
+            SaveService.Save(save);
+            if(gameplay.ReviveWithBerry())BuildGameplay();
         }
 
         private void PauseGame()
@@ -385,36 +503,5 @@ namespace CapybaraGame
             Button(bg.transform,"HOME",24,card,()=>{gameplay.Exit();ShowHome();},new Vector2(.22f,.28f),new Vector2(.78f,.35f));
         }
 
-        private void UseHint()
-        {
-            const int cost = 100;
-            if (save.coins < cost) return;
-            if (!gameplay.TryGetSolutionCell(out var row, out var col)) return;
-            save.coins -= cost;
-            SaveService.Save(save);
-            board.SetSelected(row, col);
-            board.Refresh(gameplay.State);
-        }
-
-        private void UseReveal()
-        {
-            const int cost = 175;
-            if (save.coins < cost) return;
-            if (!gameplay.TryGetSolutionCell(out var row, out var col)) return;
-            save.coins -= cost;
-            SaveService.Save(save);
-            gameplay.TapCell(row, col);
-            if (gameplay.CurrentState == GameplayState.Playing) RefreshGameplay();
-        }
-
-        private void UseExtraToken()
-        {
-            const int cost = 250;
-            if (save.coins < cost) return;
-            save.coins -= cost;
-            gameplay.State.livesRemaining = Mathf.Min(GameplayController.MaxLives, gameplay.State.livesRemaining + 1);
-            SaveService.Save(save);
-            RefreshGameplay();
-        }
     }
 }
