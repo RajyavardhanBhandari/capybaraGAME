@@ -63,6 +63,7 @@ namespace CapybaraGame
             haptics = new HapticService();
             haptics.Initialize(save);
 
+            EnsureRuntimeCamera();
             BuildCanvas();
             ShowHome();
         }
@@ -79,7 +80,7 @@ namespace CapybaraGame
             scaler.referenceResolution = new Vector2(1080, 1920);
             scaler.matchWidthOrHeight = .5f;
 
-            font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (EventSystem.current == null)
             {
                 var es = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
