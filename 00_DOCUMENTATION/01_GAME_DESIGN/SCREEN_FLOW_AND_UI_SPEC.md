@@ -19,8 +19,7 @@ BOOT
 
 ### Progression
 HOME
-→ PROGRESSION MAP
-→ LEVEL READY
+→ CURRENT PUZZLE
 → PLAYING
 → placement / removal / error
 → SOLVED or FAILED
@@ -95,7 +94,7 @@ The map is a presentation layer only. Puzzle rules do not change.
 Show:
 - Level number
 - difficulty band
-- 3 lives
+- 3 mistake tokens shown as the active character's resource
 - active character
 - short rule reminder
 - Play button
@@ -111,9 +110,9 @@ Do not add tutorial copy once the player has demonstrated understanding.
 ## 5. Gameplay Screen
 
 ### Top bar
-- Back
-- Level / Daily label
-- Lives
+- Pause
+- Puzzle number / Daily label
+- Character-specific mistake resource
 - Settings
 
 ### Board
@@ -134,9 +133,11 @@ Each action shows its current coin cost.
 Show the selected character as a small, clear control. Character selection changes appearance only.
 
 ### Core interactions
-- Empty valid cell → place character
-- Empty invalid cell → error + lose one life
-- Occupied cell → remove character
+- Empty cell → single tap marks an X
+- Empty cell → double-tap attempts to place the active character
+- Occupied character → tap removes it
+- Invalid double-tap → error + lose one character-specific mistake token
+
 - Input is ignored during animations
 
 ### Placement feedback
@@ -373,7 +374,7 @@ Every event must have an audio/haptic-off path.
 Never interrupt active puzzle solving with forced ads.
 
 Rewarded ad entry points:
-- progression extra life
+- progression extra mistake token
 - optional coin reward
 
 Limits remain configuration-driven and follow the master plan.
