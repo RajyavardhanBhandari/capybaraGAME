@@ -45,6 +45,18 @@ public sealed class LevelSystemPhase5Tests
     }
 
     [Test]
+    public void HardChallengeTargetCurveIsStrictlyIncreasing()
+    {
+        float previous = 0f;
+        for (int index = 1; index <= 50; index++)
+        {
+            float current = LevelProgressionRules.HardChallengeTargetScore(index);
+            Assert.Greater(current, previous);
+            previous = current;
+        }
+    }
+
+    [Test]
     public void ProgressionBandsCoverTheLaunchSet()
     {
         Assert.AreEqual(1, LevelCatalog.Get(1).ProgressionBand);
