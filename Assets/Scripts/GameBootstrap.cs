@@ -202,25 +202,36 @@ namespace CapybaraGame
         {
             Clear();
             var bg=Panel(canvas.transform,background,Vector2.zero,Vector2.one);
-            Label(bg.transform,"CAPYBARA",46,TextAnchor.MiddleCenter,text,new Vector2(.08f,.87f),new Vector2(.92f,.96f));
-            Label(bg.transform,"A tiny puzzle. A big little world.",22,TextAnchor.MiddleCenter,new Color(.40f,.35f,.31f),new Vector2(.08f,.82f),new Vector2(.92f,.87f));
 
+            // Header
+            Label(bg.transform,"CAPY",38,TextAnchor.MiddleLeft,text,new Vector2(.08f,.91f),new Vector2(.45f,.97f));
+            var coinPill=Panel(bg.transform,new Color(1f,.985f,.965f),new Vector2(.57f,.915f),new Vector2(.92f,.965f));
+            Label(coinPill.transform,"●  "+save.coins,20,TextAnchor.MiddleCenter,new Color(.68f,.47f,.12f),Vector2.zero,Vector2.one);
+            Button(bg.transform,"⚙",22,card,ShowSettings,new Vector2(.06f,.84f),new Vector2(.15f,.90f));
+
+            // Hero
+            var hero=Panel(bg.transform,new Color(1f,.985f,.965f),new Vector2(.08f,.57f),new Vector2(.92f,.84f));
+            Label(hero.transform,"YOUR NEXT PUZZLE",17,TextAnchor.MiddleCenter,new Color(.48f,.42f,.38f),new Vector2(.08f,.83f),new Vector2(.92f,.93f));
+            Label(hero.transform,$"LEVEL {save.unlockedLevel}",38,TextAnchor.MiddleCenter,text,new Vector2(.08f,.68f),new Vector2(.92f,.82f));
             var mascot=new GameObject("CapybaraMascot",typeof(RectTransform));
-            mascot.transform.SetParent(bg.transform,false);
+            mascot.transform.SetParent(hero.transform,false);
             var mr=mascot.GetComponent<RectTransform>();
-            mr.anchorMin=new Vector2(.30f,.59f); mr.anchorMax=new Vector2(.70f,.80f); mr.offsetMin=mr.offsetMax=Vector2.zero;
+            mr.anchorMin=new Vector2(.34f,.08f); mr.anchorMax=new Vector2(.66f,.70f); mr.offsetMin=mr.offsetMax=Vector2.zero;
             var face=mascot.AddComponent<CharacterFaceView>(); face.Build(CharacterId.Capybara,save.reducedMotion); face.SetVisible(true);
 
-            Label(bg.transform,$"LEVEL {save.unlockedLevel}",24,TextAnchor.MiddleCenter,text,new Vector2(.08f,.53f),new Vector2(.42f,.58f));
-            Label(bg.transform,$"COINS {save.coins}",24,TextAnchor.MiddleCenter,text,new Vector2(.58f,.53f),new Vector2(.92f,.58f));
+            Button(bg.transform,"PLAY",34,new Color(.55f,.78f,.48f),()=>StartLevel(save.unlockedLevel),new Vector2(.10f,.46f),new Vector2(.90f,.54f));
 
-            Button(bg.transform,"PLAY",38,new Color(.55f,.78f,.48f),()=>StartLevel(save.unlockedLevel),new Vector2(.10f,.40f),new Vector2(.90f,.49f));
-            Button(bg.transform,"STORE",22,card,ShowStore,new Vector2(.10f,.31f),new Vector2(.31f,.37f));
-            Button(bg.transform,"HOW TO PLAY",22,card,ShowRules,new Vector2(.34f,.31f),new Vector2(.56f,.37f));
-            Button(bg.transform,"SETTINGS",22,card,ShowSettings,new Vector2(.59f,.31f),new Vector2(.90f,.37f));
+            // Secondary actions
+            Button(bg.transform,"STORE",19,card,ShowStore,new Vector2(.10f,.38f),new Vector2(.43f,.44f));
+            Button(bg.transform,"HOW TO PLAY",19,card,ShowRules,new Vector2(.57f,.38f),new Vector2(.90f,.44f));
 
-            Label(bg.transform,$"{CharacterCatalog.ResourceIcon(characters.Active)}  {save.treats} {CharacterCatalog.ResourceName(characters.Active)}",21,TextAnchor.MiddleCenter,new Color(.40f,.35f,.31f),new Vector2(.10f,.21f),new Vector2(.90f,.27f));
-            Label(bg.transform,"Solve one puzzle. Win it. Move forward.",19,TextAnchor.MiddleCenter,new Color(.50f,.45f,.41f),new Vector2(.10f,.15f),new Vector2(.90f,.20f));
+            // Progress snapshot
+            var stats=Panel(bg.transform,new Color(1f,.985f,.965f),new Vector2(.10f,.20f),new Vector2(.90f,.34f));
+            Label(stats.transform,"PROGRESS",15,TextAnchor.MiddleLeft,new Color(.50f,.44f,.40f),new Vector2(.06f,.58f),new Vector2(.45f,.92f));
+            Label(stats.transform,$"{save.completedLevels.Count} puzzles solved",19,TextAnchor.MiddleLeft,text,new Vector2(.06f,.10f),new Vector2(.62f,.60f));
+            Label(stats.transform,$"{save.treats} treats",19,TextAnchor.MiddleRight,new Color(.68f,.47f,.12f),new Vector2(.62f,.10f),new Vector2(.94f,.60f));
+
+            Label(bg.transform,"Simple puzzle. Deep little world.",18,TextAnchor.MiddleCenter,new Color(.50f,.45f,.41f),new Vector2(.10f,.13f),new Vector2(.90f,.18f));
         }
 
         private void ShowStore()
@@ -279,29 +290,38 @@ namespace CapybaraGame
         {
             Clear();
             var bg=Panel(canvas.transform,background,Vector2.zero,Vector2.one);
-            var faceObject=new GameObject("ReadyFace",typeof(RectTransform));
-            faceObject.transform.SetParent(bg.transform,false);
-            var fr=faceObject.GetComponent<RectTransform>();
-            fr.anchorMin=new Vector2(.34f,.62f); fr.anchorMax=new Vector2(.66f,.82f); fr.offsetMin=fr.offsetMax=Vector2.zero;
-            var face=faceObject.AddComponent<CharacterFaceView>(); face.Build(gameplay.ActiveCharacter,save.reducedMotion); face.SetVisible(true);
 
-            Label(bg.transform,$"PUZZLE {gameplay.LevelId}",36,TextAnchor.MiddleCenter,text,new Vector2(.08f,.54f),new Vector2(.92f,.61f));
-            Label(bg.transform,$"{CharacterCatalog.ResourceIcon(gameplay.ActiveCharacter)}  3 {CharacterCatalog.ResourceName(gameplay.ActiveCharacter)}",22,TextAnchor.MiddleCenter,new Color(.40f,.35f,.31f),new Vector2(.10f,.47f),new Vector2(.90f,.52f));
+            Button(bg.transform,"‹",34,card,ShowHome,new Vector2(.06f,.91f),new Vector2(.15f,.97f));
+            Label(bg.transform,$"LEVEL {gameplay.LevelId}",30,TextAnchor.MiddleCenter,text,new Vector2(.20f,.92f),new Vector2(.80f,.97f));
+            var coinPill=Panel(bg.transform,new Color(1f,.985f,.965f),new Vector2(.70f,.855f),new Vector2(.92f,.90f));
+            Label(coinPill.transform,"●  "+save.coins,17,TextAnchor.MiddleCenter,new Color(.68f,.47f,.12f),Vector2.zero,Vector2.one);
+
+            var hero=Panel(bg.transform,new Color(1f,.985f,.965f),new Vector2(.08f,.57f),new Vector2(.92f,.85f));
+            var faceObject=new GameObject("ReadyFace",typeof(RectTransform));
+            faceObject.transform.SetParent(hero.transform,false);
+            var fr=faceObject.GetComponent<RectTransform>();
+            fr.anchorMin=new Vector2(.36f,.20f); fr.anchorMax=new Vector2(.64f,.82f); fr.offsetMin=fr.offsetMax=Vector2.zero;
+            var face=faceObject.AddComponent<CharacterFaceView>(); face.Build(gameplay.ActiveCharacter,save.reducedMotion); face.SetVisible(true);
+            Label(hero.transform,$"{CharacterCatalog.Name(gameplay.ActiveCharacter)}'s turn",18,TextAnchor.MiddleCenter,new Color(.48f,.42f,.38f),new Vector2(.08f,.04f),new Vector2(.92f,.18f));
+
+            var rules=Panel(bg.transform,card,new Vector2(.08f,.38f),new Vector2(.92f,.54f));
+            Label(rules.transform,"3 "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter)+"  •  1 per region  •  1 per row  •  1 per column",17,TextAnchor.MiddleCenter,text,new Vector2(.05f,.52f),new Vector2(.95f,.92f));
+            Label(rules.transform,"Characters cannot touch, including diagonally.",16,TextAnchor.MiddleCenter,new Color(.48f,.42f,.38f),new Vector2(.05f,.12f),new Vector2(.95f,.52f));
 
             if(save.hintAids>0 || save.revealAids>0)
             {
-                Label(bg.transform,$"AIDS READY   HINT {save.hintAids}   REVEAL {save.revealAids}",19,TextAnchor.MiddleCenter,new Color(.45f,.40f,.36f),new Vector2(.10f,.38f),new Vector2(.90f,.43f));
-                Button(bg.transform,pendingHint?"HINT READY":"USE HINT",19,pendingHint?new Color(.55f,.78f,.48f):card,()=>{
+                Label(bg.transform,"READY YOUR AIDS",15,TextAnchor.MiddleCenter,new Color(.50f,.44f,.40f),new Vector2(.10f,.32f),new Vector2(.90f,.37f));
+                Button(bg.transform,pendingHint?"✓ HINT READY":"HINT  ·  "+save.hintAids,18,pendingHint?new Color(.55f,.78f,.48f):card,()=>{
                     if(!pendingHint && save.hintAids>0){save.hintAids--;pendingHint=true;SaveService.Save(save);ShowLevelReady();}
-                },new Vector2(.10f,.30f),new Vector2(.43f,.36f));
-                Button(bg.transform,pendingReveal?"REVEAL READY":"USE REVEAL",19,pendingReveal?new Color(.55f,.78f,.48f):card,()=>{
+                },new Vector2(.10f,.25f),new Vector2(.47f,.31f));
+                Button(bg.transform,pendingReveal?"✓ REVEAL READY":"REVEAL  ·  "+save.revealAids,18,pendingReveal?new Color(.55f,.78f,.48f):card,()=>{
                     if(!pendingReveal && save.revealAids>0){save.revealAids--;pendingReveal=true;SaveService.Save(save);ShowLevelReady();}
-                },new Vector2(.57f,.30f),new Vector2(.90f,.36f));
+                },new Vector2(.53f,.25f),new Vector2(.90f,.31f));
             }
 
-            Button(bg.transform,"PLAY PUZZLE",34,new Color(.55f,.78f,.48f),BeginLevel,new Vector2(.10f,.19f),new Vector2(.90f,.28f));
-            Button(bg.transform,"STORE",20,card,ShowStore,new Vector2(.10f,.10f),new Vector2(.43f,.16f));
-            Button(bg.transform,"BACK",20,card,ShowHome,new Vector2(.57f,.10f),new Vector2(.90f,.16f));
+            Button(bg.transform,"PLAY PUZZLE",30,new Color(.55f,.78f,.48f),BeginLevel,new Vector2(.10f,.15f),new Vector2(.90f,.23f));
+            Button(bg.transform,"STORE",18,card,ShowStore,new Vector2(.10f,.08f),new Vector2(.43f,.13f));
+            Button(bg.transform,"BACK",18,card,ShowHome,new Vector2(.57f,.08f),new Vector2(.90f,.13f));
         }
 
         private void ShowRules()
@@ -359,23 +379,40 @@ namespace CapybaraGame
             var bg=Panel(canvas.transform,background,Vector2.zero,Vector2.one);
             var puzzle=gameplay.Puzzle;
 
-            Button(bg.transform,"Ⅱ",26,card,PauseGame,new Vector2(.06f,.92f),new Vector2(.16f,.97f));
-            Label(bg.transform,$"PUZZLE {gameplay.LevelId}",30,TextAnchor.MiddleCenter,text,new Vector2(.20f,.92f),new Vector2(.80f,.97f));
-            Label(bg.transform,$"{CharacterCatalog.ResourceIcon(gameplay.ActiveCharacter)}  {gameplay.State.livesRemaining} {CharacterCatalog.ResourceName(gameplay.ActiveCharacter)}",22,TextAnchor.MiddleCenter,new Color(.40f,.35f,.31f),new Vector2(.62f,.84f),new Vector2(.94f,.90f));
-            Label(bg.transform,$"{CharacterCatalog.Name(gameplay.ActiveCharacter)}  ·  {puzzle.difficultyBand}",20,TextAnchor.MiddleCenter,new Color(.48f,.42f,.38f),new Vector2(.06f,.84f),new Vector2(.60f,.90f));
+            // Compact premium HUD
+            Button(bg.transform,"‹",32,card,PauseGame,new Vector2(.05f,.92f),new Vector2(.14f,.975f));
+            var levelCard=Panel(bg.transform,card,new Vector2(.19f,.915f),new Vector2(.48f,.975f));
+            Label(levelCard.transform,"LEVEL "+gameplay.LevelId,21,TextAnchor.MiddleCenter,text,Vector2.zero,Vector2.one);
+            var resourceCard=Panel(bg.transform,card,new Vector2(.52f,.915f),new Vector2(.95f,.975f));
+            Label(resourceCard.transform,CharacterCatalog.ResourceIcon(gameplay.ActiveCharacter)+"  "+gameplay.State.livesRemaining,21,TextAnchor.MiddleCenter,new Color(.55f,.38f,.16f),Vector2.zero,Vector2.one);
 
+            // Character identity strip
+            var identity=Panel(bg.transform,new Color(1f,.985f,.965f),new Vector2(.07f,.855f),new Vector2(.93f,.905f));
+            Label(identity.transform,CharacterCatalog.Name(gameplay.ActiveCharacter).ToUpper()+"  ·  "+puzzle.difficultyBand.ToUpper(),16,TextAnchor.MiddleCenter,new Color(.48f,.42f,.38f),Vector2.zero,Vector2.one);
+
+            // Rule cards
+            var rules=Panel(bg.transform,card,new Vector2(.07f,.775f),new Vector2(.93f,.845f));
+            Label(rules.transform,"1 / REGION     1 / ROW     1 / COLUMN     NO TOUCHING",15,TextAnchor.MiddleCenter,text,new Vector2(.03f,.35f),new Vector2(.97f,.90f));
+            Label(rules.transform,"Single tap = X   •   Double tap = place",14,TextAnchor.MiddleCenter,new Color(.50f,.44f,.40f),new Vector2(.03f,.02f),new Vector2(.97f,.40f));
+
+            // Board dominates the screen
+            var boardCard=Panel(bg.transform,new Color(1f,.995f,.985f),new Vector2(.055f,.275f),new Vector2(.945f,.765f));
             var boardObject=new GameObject("Board",typeof(RectTransform));
-            boardObject.transform.SetParent(bg.transform,false);
+            boardObject.transform.SetParent(boardCard.transform,false);
             var br=boardObject.GetComponent<RectTransform>();
-            br.anchorMin=new Vector2(.06f,.29f); br.anchorMax=new Vector2(.94f,.82f); br.offsetMin=br.offsetMax=Vector2.zero;
+            br.anchorMin=new Vector2(.02f,.02f); br.anchorMax=new Vector2(.98f,.98f); br.offsetMin=br.offsetMax=Vector2.zero;
             board=boardObject.AddComponent<BoardView>();
             board.Build(puzzle,regionColors,gameplay.ActiveCharacter,save.reducedMotion,OnCellMarked,OnCellDoubleTapped);
             board.Refresh(gameplay.State);
 
-            Label(bg.transform,"TAP  ×",17,TextAnchor.MiddleCenter,new Color(.48f,.43f,.39f),new Vector2(.06f,.23f),new Vector2(.47f,.28f));
-            Label(bg.transform,"DOUBLE-TAP  PLACE",17,TextAnchor.MiddleCenter,new Color(.48f,.43f,.39f),new Vector2(.53f,.23f),new Vector2(.94f,.28f));
-            Label(bg.transform,"AIDS ARE LOCKED DURING PLAY",17,TextAnchor.MiddleCenter,new Color(.50f,.45f,.41f),new Vector2(.08f,.14f),new Vector2(.92f,.19f));
-            Label(bg.transform,$"COINS {save.coins}",19,TextAnchor.MiddleCenter,new Color(.45f,.40f,.36f),new Vector2(.25f,.07f),new Vector2(.75f,.12f));
+            // Bottom action guidance
+            var guide=Panel(bg.transform,card,new Vector2(.08f,.19f),new Vector2(.92f,.245f));
+            Label(guide.transform,"X  MARK CANDIDATE",15,TextAnchor.MiddleLeft,new Color(.48f,.42f,.38f),new Vector2(.04f,.05f),new Vector2(.48f,.95f));
+            Label(guide.transform,"DOUBLE-TAP  PLACE",15,TextAnchor.MiddleRight,new Color(.48f,.42f,.38f),new Vector2(.52f,.05f),new Vector2(.96f,.95f));
+
+            Label(bg.transform,"AIDS PREPARED BEFORE PLAY  ·  NO SHOPPING DURING PUZZLE",13,TextAnchor.MiddleCenter,new Color(.55f,.50f,.46f),new Vector2(.08f,.10f),new Vector2(.92f,.15f));
+            var coinPill=Panel(bg.transform,card,new Vector2(.32f,.045f),new Vector2(.68f,.09f));
+            Label(coinPill.transform,"●  "+save.coins,16,TextAnchor.MiddleCenter,new Color(.68f,.47f,.12f),Vector2.zero,Vector2.one);
         }
 
         private static string LifeText(int lives)
@@ -453,30 +490,37 @@ namespace CapybaraGame
         {
             Clear();
             var bg=Panel(canvas.transform,background,Vector2.zero,Vector2.one);
+
+            var top=Panel(bg.transform,card,new Vector2(.08f,.88f),new Vector2(.92f,.96f));
+            Label(top.transform,"LEVEL "+gameplay.LevelId,22,TextAnchor.MiddleCenter,text,Vector2.zero,Vector2.one);
+
+            var hero=Panel(bg.transform,solved?new Color(.92f,.96f,.87f):new Color(1f,.93f,.89f),new Vector2(.08f,.53f),new Vector2(.92f,.84f));
             var mascot=new GameObject("ResultFace",typeof(RectTransform));
-            mascot.transform.SetParent(bg.transform,false);
+            mascot.transform.SetParent(hero.transform,false);
             var mr=mascot.GetComponent<RectTransform>();
-            mr.anchorMin=new Vector2(.34f,.62f); mr.anchorMax=new Vector2(.66f,.80f); mr.offsetMin=mr.offsetMax=Vector2.zero;
+            mr.anchorMin=new Vector2(.34f,.20f); mr.anchorMax=new Vector2(.66f,.88f); mr.offsetMin=mr.offsetMax=Vector2.zero;
             var face=mascot.AddComponent<CharacterFaceView>(); face.Build(gameplay.ActiveCharacter,save.reducedMotion); face.SetVisible(true);
+            Label(hero.transform,solved?"PUZZLE SOLVED!":"OUT OF "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter).ToUpper(),26,TextAnchor.MiddleCenter,text,new Vector2(.05f,.05f),new Vector2(.95f,.22f));
 
-            Label(bg.transform,solved?"PUZZLE SOLVED!":"OUT OF "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter).ToUpper(),38,TextAnchor.MiddleCenter,text,new Vector2(.06f,.52f),new Vector2(.94f,.60f));
-            Label(bg.transform,solved
-                ? $"{CharacterCatalog.ResourceIcon(gameplay.ActiveCharacter)} +{reward.Treats} {CharacterCatalog.ResourceName(gameplay.ActiveCharacter)}\nCOINS +{reward.Coins}"
-                : $"This attempt is over.",25,TextAnchor.MiddleCenter,new Color(.40f,.35f,.31f),new Vector2(.10f,.41f),new Vector2(.90f,.51f));
-
+            var rewardCard=Panel(bg.transform,card,new Vector2(.10f,.36f),new Vector2(.90f,.48f));
             if(solved)
             {
-                Button(bg.transform,gameplay.LevelId<500?"NEXT PUZZLE":"ALL PUZZLES COMPLETE",34,new Color(.55f,.78f,.48f),()=>{
+                Label(rewardCard.transform,"+"+reward.Treats+" TREATS",22,TextAnchor.MiddleLeft,new Color(.68f,.47f,.12f),new Vector2(.06f,.45f),new Vector2(.52f,.90f));
+                Label(rewardCard.transform,"+"+reward.Coins+" COINS",22,TextAnchor.MiddleRight,new Color(.45f,.68f,.28f),new Vector2(.48f,.45f),new Vector2(.94f,.90f));
+                Label(rewardCard.transform,gameplay.State.livesRemaining+" "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter)+" remaining",16,TextAnchor.MiddleCenter,new Color(.50f,.44f,.40f),new Vector2(.06f,.05f),new Vector2(.94f,.45f));
+                Button(bg.transform,gameplay.LevelId<500?"NEXT LEVEL":"ALL LEVELS COMPLETE",28,new Color(.55f,.78f,.48f),()=>{
                     gameplay.Advance();
                     int next=LevelCatalog.NextLevel(gameplay.LevelId);
                     if(next>0)StartLevel(next); else ShowHome();
-                },new Vector2(.10f,.27f),new Vector2(.90f,.36f));
+                },new Vector2(.10f,.23f),new Vector2(.90f,.31f));
             }
             else
             {
-                Button(bg.transform,"WATCH AD  +1 "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter).ToUpper(),21,new Color(.55f,.78f,.48f),TryRewardedBerry,new Vector2(.08f,.29f),new Vector2(.92f,.36f));
-                Button(bg.transform,"BUY 1 "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter).ToUpper()+"  ·  "+BerryReviveCost,21,new Color(.96f,.84f,.54f),BuyBerryRevive,new Vector2(.08f,.20f),new Vector2(.92f,.27f));
-                Button(bg.transform,"RETRY PUZZLE",24,card,()=>StartLevel(gameplay.LevelId),new Vector2(.22f,.10f),new Vector2(.78f,.16f));
+                Label(rewardCard.transform,"No treats earned this attempt.",17,TextAnchor.MiddleCenter,new Color(.55f,.45f,.42f),new Vector2(.05f,.52f),new Vector2(.95f,.90f));
+                Label(rewardCard.transform,"Choose one recovery, then return to the puzzle.",15,TextAnchor.MiddleCenter,new Color(.50f,.44f,.40f),new Vector2(.05f,.08f),new Vector2(.95f,.50f));
+                Button(bg.transform,"WATCH AD  +1 "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter).ToUpper(),19,new Color(.55f,.78f,.48f),TryRewardedBerry,new Vector2(.08f,.14f),new Vector2(.48f,.21f));
+                Button(bg.transform,"BUY 1  ·  "+BerryReviveCost,19,new Color(.96f,.84f,.54f),BuyBerryRevive,new Vector2(.52f,.14f),new Vector2(.92f,.21f));
+                Button(bg.transform,"RETRY",20,card,()=>StartLevel(gameplay.LevelId),new Vector2(.28f,.07f),new Vector2(.72f,.12f));
             }
         }
 
