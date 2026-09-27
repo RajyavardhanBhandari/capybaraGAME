@@ -36,7 +36,6 @@ namespace CapybaraGame
         private Font font;
         private Sprite roundedSprite;
         private readonly System.Collections.Generic.List<GameObject> spawned = new System.Collections.Generic.List<GameObject>();
-        private int levelSelectPage;
         private readonly Color background = new Color(.965f, .945f, .925f);
         private readonly Color card = new Color(1f, .985f, .965f);
         private readonly Color text = new Color(.18f, .15f, .14f);
@@ -216,39 +215,6 @@ namespace CapybaraGame
 
             Label(bg.transform,$"{CharacterCatalog.ResourceIcon(characters.Active)}  {save.treats} {CharacterCatalog.ResourceName(characters.Active)}",21,TextAnchor.MiddleCenter,new Color(.40f,.35f,.31f),new Vector2(.10f,.21f),new Vector2(.90f,.27f));
             Label(bg.transform,"Solve one puzzle. Win it. Move forward.",19,TextAnchor.MiddleCenter,new Color(.50f,.45f,.41f),new Vector2(.10f,.15f),new Vector2(.90f,.20f));
-        }
-
-        private void ShowLevelSelect()
-        {
-            Clear();
-            var bg = Panel(canvas.transform, background, Vector2.zero, Vector2.one);
-            Label(bg.transform, "LEVEL SELECT", 50, TextAnchor.MiddleCenter, text, new Vector2(.06f,.88f), new Vector2(.94f,.96f));
-            const int columns = 4;
-            const int pageSize = 40;
-            int pageCount = (LevelCatalog.MaxLevel + pageSize - 1) / pageSize;
-            Label(bg.transform, $"COMPLETED  {ProgressionModel.GetCompletedCount(save)} / {LevelCatalog.MaxLevel}    PAGE {levelSelectPage + 1}/{pageCount}", 22, TextAnchor.MiddleCenter, text, new Vector2(.04f,.83f), new Vector2(.96f,.88f));
-            levelSelectPage = Mathf.Clamp(levelSelectPage, 0, pageCount - 1);
-            int firstLevel = levelSelectPage * pageSize + 1;
-            for (int i = 0; i < pageSize; i++)
-            {
-                int level = firstLevel + i;
-                if (level > LevelCatalog.MaxLevel) break;
-                int row = i / columns;
-                int col = i % columns;
-                float x0 = .06f + col * .225f;
-                float x1 = x0 + .205f;
-                float y1 = .76f - row * .075f;
-                float y0 = y1 - .062f;
-                bool unlocked = ProgressionModel.IsUnlocked(save, level);
-                bool completed = ProgressionModel.IsCompleted(save, level);
-                string label = completed ? "✓ " + level : unlocked ? level.ToString() : "🔒";
-                Color fill = completed ? new Color(.55f,.78f,.58f) : unlocked ? card : new Color(.88f,.87f,.84f);
-                Button(bg.transform, label, 24, fill, unlocked ? (UnityEngine.Events.UnityAction)(() => StartLevel(level)) : null,
-                    new Vector2(x0,y0), new Vector2(x1,y1));
-            }
-            if (levelSelectPage > 0) Button(bg.transform, "‹ PREVIOUS", 22, card, () => { levelSelectPage--; ShowLevelSelect(); }, new Vector2(.06f,.07f), new Vector2(.30f,.14f));
-            if (levelSelectPage < pageCount - 1) Button(bg.transform, "NEXT ›", 22, card, () => { levelSelectPage++; ShowLevelSelect(); }, new Vector2(.70f,.07f), new Vector2(.94f,.14f));
-            Button(bg.transform, "HOME", 22, card, ShowHome, new Vector2(.36f,.07f), new Vector2(.64f,.14f));
         }
 
         private void ShowRules()
