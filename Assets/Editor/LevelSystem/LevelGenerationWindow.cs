@@ -1,0 +1,88 @@
+#if UNITY_EDITOR
+using System.IO;
+using UnityEditor;
+using UnityEngine;
+using CapybaraGame.Levels;
+
+namespace CapybaraGame.Editor
+{
+    public sealed class LevelGenerationWindow : EditorWindow
+    {
+        private int candidateCount = 10000;
+        private int seed = 20260927;
+        private int generationVersion = 1;
+        private int launchCount = 500;
+        private string lastReport = "Not generated.";
+
+        [MenuItem("Capybara/Level System/Level Generator")]
+        public static void Open() => GetWindow<LevelGenerationWindow>("Level Generator");
+
+        private void OnGUI()
+        {
+            EditorGUILayout.LabelField("Phase 5 — Level Generator", EditorStyles.boldLabel);
+            candidateCount = EditorGUILayout.IntField("Candidates", candidateCount);
+            launchCount = EditorGUILayout.IntField("Launch Levels", launchCount);
+            seed = EditorGUILayout.IntField("Seed", seed);
+            generationVersion = EditorGUILayout.IntField("Generation Version", generationVersion);
+
+            if (GUILayout.Button("Generate Candidate Pool + 500-Level Database"))
+            {
+                var config = new LevelGenerationConfig
+                {
+                    candidateCount = Mathf.Max(500, candidateCount),
+                    launchLevelCount = Mathf.Clamp(launchCount, 1, 500),
+                    seed = seed,
+                    generationVersion = generationVersion
+                };
+
+                var output = LevelBatchGenerator.Generate(config);
+                Save(output, config);
+                lastReport =
+                    $"Generated={output.Report.GeneratedCandidates}\n" +
+                    $"Unique={output.Report.UniqueCandidates}\n" +
+                    $"Selected={output.Report.SelectedLevels}\n" +
+                    $"Hard Challenges={output.Report.HardChallenges}\n" +
+                    $"Elapsed={output.Report.Elapsed.TotalSeconds:0.00}s\n" +
+                    string.Join("\n", output.Warnings.ToArray());
+
+                Debug.Log("Phase 5 level generation complete.\n" + lastReport);
+            }
+
+            EditorGUILayout.Space(8);
+            EditorGUILayout.HelpBox(lastReport, MessageType.Info);
+            if (GUILayout.Button("Open Level Preview")) LevelPreviewWindow.Open();
+            if (GUILayout.Button("Run 500-Level Validation")) LevelValidationWindow.RunValidation();
+        }
+
+        private static void Save(LevelGenerationOutput output, LevelGenerationConfig config)
+        {
+            const string directory = "Assets/Data/Levels";
+            if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
+
+            var levelDatabase = new LevelDatabase
+            {
+                databaseVersion = 1,
+                generationVersion = config.generationVersion,
+                levels = output.LevelDatabase.levels
+            };
+
+            var puzzleDatabase = new PuzzleDatabase
+            {
+                databaseVersion = 1,
+                generationVersion = config.generationVersion,
+                puzzles = output.PuzzlePool
+            };
+
+            File.WriteAllText(
+                Path.Combine(directory, "LevelDatabase.json"),
+                JsonUtility.ToJson(levelDatabase, true));
+
+            File.WriteAllText(
+                Path.Combine(directory, "PuzzleDatabase.json"),
+                JsonUtility.ToJson(puzzleDatabase, false));
+
+            AssetDatabase.Refresh();
+        }
+    }
+}
+#endif
