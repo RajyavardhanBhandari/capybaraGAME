@@ -99,5 +99,11 @@ namespace CapybaraGame.Levels
             => score < profile.EasyMax ? PuzzleDifficultyBand.Easy :
                score < profile.MediumMax ? PuzzleDifficultyBand.Medium :
                PuzzleDifficultyBand.Hard;
+
+        public static float HardChallengeTargetScore(int index)
+        {
+            if (index < 1) throw new ArgumentOutOfRangeException(nameof(index));
+            return Math.Min(96f, 55f + (index - 1) * (36f / 49f));
+        }
     }
 }
