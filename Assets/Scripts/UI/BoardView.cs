@@ -17,6 +17,7 @@ namespace CapybaraGame.UI
         private GameObject brokenHeart;
         private Text brokenHeartLeft;
         private Text brokenHeartRight;
+        private Image heartCrack;
         private readonly Image[] edges = new Image[4];
         private Action<int, int> clicked;
         private Action<int, int> doubleClicked;
@@ -77,6 +78,16 @@ namespace CapybaraGame.UI
 
             brokenHeartLeft = CreateHeartPart("HeartLeft", root);
             brokenHeartRight = CreateHeartPart("HeartRight", root);
+            var crackObject = new GameObject("HeartCrack", typeof(RectTransform), typeof(Image));
+            crackObject.transform.SetParent(root, false);
+            var crackRect = crackObject.GetComponent<RectTransform>();
+            crackRect.anchorMin = crackRect.anchorMax = new Vector2(.5f, .5f);
+            crackRect.pivot = new Vector2(.5f, .5f);
+            crackRect.sizeDelta = new Vector2(5f, 44f);
+            crackRect.localRotation = Quaternion.Euler(0f,0f,35f);
+            heartCrack = crackObject.GetComponent<Image>();
+            heartCrack.color = new Color(1f,1f,1f,0f);
+            heartCrack.raycastTarget = false;
             brokenHeart.SetActive(false);
         }
 
@@ -178,6 +189,7 @@ namespace CapybaraGame.UI
             right.localRotation = Quaternion.Euler(0f, 0f, 0f);
             brokenHeartLeft.color = new Color(.95f,.22f,.25f,0f);
             brokenHeartRight.color = new Color(.95f,.22f,.25f,0f);
+            heartCrack.color = new Color(1f,1f,1f,0f);
 
             float t = 0f;
             while (t < .42f)
@@ -187,6 +199,7 @@ namespace CapybaraGame.UI
                 float ease = 1f - Mathf.Pow(1f - p, 3f);
                 brokenHeartLeft.color = new Color(.95f,.22f,.25f,1f - p);
                 brokenHeartRight.color = new Color(.95f,.22f,.25f,1f - p);
+                heartCrack.color = new Color(1f,1f,1f,Mathf.Clamp01(1f - Mathf.Abs(p - .45f) * 4f));
                 left.anchoredPosition = new Vector2(Mathf.Lerp(-2f,-20f,ease), Mathf.Lerp(-2f,16f,ease));
                 right.anchoredPosition = new Vector2(Mathf.Lerp(2f,20f,ease), Mathf.Lerp(-2f,16f,ease));
                 left.localRotation = Quaternion.Euler(0f,0f,Mathf.Lerp(0f, -16f, ease));
