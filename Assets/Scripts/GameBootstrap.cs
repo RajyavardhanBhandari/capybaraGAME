@@ -380,6 +380,12 @@ namespace CapybaraGame
         {
             string day = ChallengeService.TodayIdUtc();
             if (ChallengeService.HasDailyResult(day)) { ShowDailyStatus(day); return; }
+            var readiness = DailyReadinessService.Evaluate(day);
+            if (!readiness.Ready)
+            {
+                ShowDailyStatus(day);
+                return;
+            }
             dailyMode = true; goldenMode = false; pendingHint = false; pendingReveal = false;
             gameplay.LoadLevel(ChallengeService.DailyLevelId(day), characters.Active);
             AnalyticsService.Track("daily_started", day);
