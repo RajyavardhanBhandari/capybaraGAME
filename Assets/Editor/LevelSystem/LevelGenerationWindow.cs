@@ -25,7 +25,7 @@ namespace CapybaraGame.Editor
             seed = EditorGUILayout.IntField("Seed", seed);
             generationVersion = EditorGUILayout.IntField("Generation Version", generationVersion);
 
-            if (GUILayout.Button("Generate Candidate Pool + 500-Level Database"))
+            if (GUILayout.Button("Generate Candidate Pool + Level Database"))
             {
                 var config = new LevelGenerationConfig
                 {
@@ -37,6 +37,7 @@ namespace CapybaraGame.Editor
 
                 var output = LevelBatchGenerator.Generate(config);
                 Save(output, config);
+
                 lastReport =
                     $"Generated={output.Report.GeneratedCandidates}\n" +
                     $"Unique={output.Report.UniqueCandidates}\n" +
@@ -56,31 +57,55 @@ namespace CapybaraGame.Editor
 
         private static void Save(LevelGenerationOutput output, LevelGenerationConfig config)
         {
-            const string directory = "Assets/Data/Levels";
+            const string directory = "Assets/Resources/Levels";
             if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
 
-            var levelDatabase = new LevelDatabase
-            {
-                databaseVersion = 1,
-                generationVersion = config.generationVersion,
-                levels = output.LevelDatabase.levels
-            };
+            var levelPath = directory + "/LevelDatabase.asset";
+            var puzzlePath = directory + "/PuzzleDatabase.asset";
 
-            var puzzleDatabase = new PuzzleDatabase
+            var levelAsset = AssetDatabase.LoadAssetAtPath<LevelDatabaseAsset>(levelPath);
+            if (levelAsset == null)
             {
-                databaseVersion = 1,
-                generationVersion = config.generationVersion,
-                puzzles = output.PuzzlePool
-            };
+                levelAsset = CreateInstance<LevelDatabaseAsset>();
+                AssetDatabase.CreateAsset(levelAsset, levelPath);
+            }
+
+            var puzzleAsset = AssetDatabase.LoadAssetAtPath<PuzzleDatabaseAsset>(puzzlePath);
+            if (puzzleAsset == null)
+            {
+                puzzleAsset = CreateInstance<PuzzleDatabaseAsset>();
+                AssetDatabase.CreateAsset(puzzleAsset, puzzlePath);
+            }
+
+            Undo.RecordObject(levelAsset, "Generate Level Database");
+            Undo.RecordObject(puzzleAsset, "Generate Puzzle Database");
+
+            levelAsset.databaseVersion = 1;
+            levelAsset.generationVersion = config.generationVersion;
+            levelAsset.levels = output.LevelDatabase.levels;
+
+            puzzleAsset.databaseVersion = 1;
+            puzzleAsset.generationVersion = config.generationVersion;
+            puzzleAsset.puzzles = output.PuzzlePool;
+
+            EditorUtility.SetDirty(levelAsset);
+            EditorUtility.SetDirty(puzzleAsset);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
 
             File.WriteAllText(
-                Path.Combine(directory, "LevelDatabase.json"),
-                JsonUtility.ToJson(levelDatabase, true));
-
+                directory + "/LevelDatabase.json",
+                JsonUtility.ToJson(output.LevelDatabase, true));
             File.WriteAllText(
-                Path.Combine(directory, "PuzzleDatabase.json"),
-                JsonUtility.ToJson(puzzleDatabase, false));
-
+                directory + "/PuzzleDatabase.json",
+                JsonUtility.ToJson(output.PuzzlePool == null
+                    ? new PuzzleDatabase()
+                    : new PuzzleDatabase
+                    {
+                        databaseVersion = 1,
+                        generationVersion = config.generationVersion,
+                        puzzles = output.PuzzlePool
+                    }, false));
             AssetDatabase.Refresh();
         }
     }
