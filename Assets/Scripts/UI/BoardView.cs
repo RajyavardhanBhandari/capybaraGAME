@@ -160,6 +160,8 @@ namespace CapybaraGame.UI
             grid.padding = new RectOffset(2, 2, 2, 2);
             grid.childAlignment = TextAnchor.MiddleCenter;
             RebuildCells(click);
+            Canvas.ForceUpdateCanvases();
+            LayoutCells();
         }
 
         private void RebuildCells(Action<int, int> click)
@@ -177,7 +179,9 @@ namespace CapybaraGame.UI
                     cells.Add(view);
                 }
             }
+            grid.enabled = false;
             UpdateCellSize();
+            LayoutCells();
         }
 
         public void Refresh(PuzzleState state)
@@ -213,14 +217,50 @@ namespace CapybaraGame.UI
 
         private void UpdateCellSize()
         {
-            if (grid == null || rect == null || puzzle == null) return;
+            if (rect == null || puzzle == null) return;
             float width = rect.rect.width;
             float height = rect.rect.height;
+            if (width <= 1f || height <= 1f) return;
             float side = Mathf.Min(width, height);
             float cell = Mathf.Max(28f, (side - (puzzle.columns - 1) * 3f - 4f) / puzzle.columns);
-            grid.cellSize = new Vector2(cell, cell);
+            if (grid != null) grid.cellSize = new Vector2(cell, cell);
         }
 
-        private void OnRectTransformDimensionsChange() => UpdateCellSize();
+        private void LayoutCells()
+        {
+            if (rect == null || puzzle == null || cells.Count != puzzle.CellCount) return;
+            float width = rect.rect.width;
+            float height = rect.rect.height;
+            if (width <= 1f || height <= 1f) return;
+
+            float side = Mathf.Min(width, height);
+            float cell = Mathf.Max(28f, (side - (puzzle.columns - 1) * 3f - 4f) / puzzle.columns);
+            float total = puzzle.columns * cell + (puzzle.columns - 1) * 3f;
+            float startX = -total * 0.5f + cell * 0.5f;
+            float startY = total * 0.5f - cell * 0.5f;
+
+            for (int i = 0; i < cells.Count; i++)
+            {
+                var cellRect = cells[i].transform as RectTransform;
+                if (cellRect == null) continue;
+                int r = i / puzzle.columns;
+                int col = i % puzzle.columns;
+                cellRect.anchorMin = cellRect.anchorMax = new Vector2(0.5f, 0.5f);
+                cellRect.pivot = new Vector2(0.5f, 0.5f);
+                cellRect.sizeDelta = new Vector2(cell, cell);
+                cellRect.anchoredPosition = new Vector2(startX + col * (cell + 3f), startY - r * (cell + 3f));
+            }
+        }
+
+        private void LateUpdate()
+        {
+            if (cells.Count > 0) LayoutCells();
+        }
+
+        private void OnRectTransformDimensionsChange()
+        {
+            UpdateCellSize();
+            LayoutCells();
+        }
     }
 }
