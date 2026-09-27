@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace CapybaraGame.Core
 {
-    public enum GameScreen { Home, LevelSelect, Gameplay, Result, Pause }
+    public enum GameScreen { Home, Gameplay, Result, Pause }
     public enum PuzzleStatus { Ready, Playing, Solved, Failed }
     public enum CharacterId { Capybara, Cat, Dog, Penguin, Panda }
     public enum PuzzleDifficultyBand { Easy, Medium, Hard }
