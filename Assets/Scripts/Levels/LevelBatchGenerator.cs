@@ -87,11 +87,14 @@ namespace CapybaraGame.Levels
 
                 int grid = band.allowedGridSizes[i % band.allowedGridSizes.Length];
                 var style = (PuzzleCategory)((i + levelHint) % 6);
-                var targetBand = LevelProgressionRules.CategoryForScore(
-                    band.targetDifficultyMin +
-                    (band.targetDifficultyMax - band.targetDifficultyMin) *
-                    ((i % 100) / 99f),
-                    config.difficultyProfile);
+                var hardHint = levelHint % config.hardChallengeFrequency == 0;
+                var targetBand = hardHint
+                    ? PuzzleDifficultyBand.Hard
+                    : LevelProgressionRules.CategoryForScore(
+                        band.targetDifficultyMin +
+                        (band.targetDifficultyMax - band.targetDifficultyMin) *
+                        ((i % 100) / 99f),
+                        config.difficultyProfile);
 
                 var generation = PuzzleGenerator.Generate(new PuzzleGenerationConfig
                 {
@@ -243,10 +246,21 @@ namespace CapybaraGame.Levels
 
         private static float TargetScore(int level, ProgressionBandConfig band, bool hard)
         {
-            if (band == null) return hard ? 80f : 40f;
-            float t = (level - band.startLevel) / (float)Math.Max(1, band.endLevel - band.startLevel);
-            float score = band.targetDifficultyMin + (band.targetDifficultyMax - band.targetDifficultyMin) * t;
-            return hard ? Math.Max(score, 70f) : score;
+            if (!hard)
+            {
+                if (band == null) return 40f;
+                float t = (level - band.startLevel) / (float)Math.Max(1, band.endLevel - band.startLevel);
+                return band.targetDifficultyMin + (band.targetDifficultyMax - band.targetDifficultyMin) * t;
+            }
+
+            int index = Math.Max(1, level / 10);
+            float hardScore = 55f + (index - 1) * (36f / 49f);
+            if (band != null)
+            {
+                float bandFloor = band.targetDifficultyMin;
+                hardScore = Math.Max(hardScore, bandFloor + 8f);
+            }
+            return Math.Min(96f, hardScore);
         }
 
         private static void Increment<T>(Dictionary<T, int> dictionary, T key)
