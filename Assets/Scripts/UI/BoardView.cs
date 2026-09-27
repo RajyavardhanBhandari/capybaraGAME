@@ -41,7 +41,7 @@ namespace CapybaraGame.UI
             labelRect.offsetMax = Vector2.zero;
             mark = labelObject.GetComponent<Text>();
             mark.alignment = TextAnchor.MiddleCenter;
-            mark.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            mark.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             mark.fontSize = 26;
             mark.color = Color.white;
             mark.raycastTarget = false;
@@ -197,12 +197,18 @@ namespace CapybaraGame.UI
 
         public void PlayPlacementFeedback(int row, int column)
         {
-            cells[row * puzzle.columns + column].Pulse(reducedMotion);
+            if (puzzle == null || row < 0 || column < 0 || row >= puzzle.rows || column >= puzzle.columns) return;
+            int index = row * puzzle.columns + column;
+            if (index < 0 || index >= cells.Count) return;
+            cells[index].Pulse(reducedMotion);
         }
 
         public void PlayErrorFeedback(int row, int column)
         {
-            cells[row * puzzle.columns + column].Shake(reducedMotion);
+            if (puzzle == null || row < 0 || column < 0 || row >= puzzle.rows || column >= puzzle.columns) return;
+            int index = row * puzzle.columns + column;
+            if (index < 0 || index >= cells.Count) return;
+            cells[index].Shake(reducedMotion);
         }
 
         private void UpdateCellSize()
