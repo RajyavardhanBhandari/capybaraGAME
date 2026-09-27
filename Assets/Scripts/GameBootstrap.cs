@@ -1,4 +1,6 @@
 using CapybaraGame.Audio;
+using CapybaraGame.Challenges;
+using CapybaraGame.Analytics;
 using CapybaraGame.Characters;
 using CapybaraGame.Core;
 using CapybaraGame.Gameplay;
@@ -38,6 +40,8 @@ namespace CapybaraGame
         private readonly System.Collections.Generic.List<GameObject> spawned = new System.Collections.Generic.List<GameObject>();
         private bool pendingHint;
         private bool pendingReveal;
+        private bool dailyMode;
+        private bool goldenMode;
         private const int BerryReviveCost = 500;
         private RewardedAdService rewardedAds;
         private readonly Color background = new Color(.965f, .945f, .925f);
@@ -224,8 +228,12 @@ namespace CapybaraGame
             Button(bg.transform,"PLAY",34,new Color(.55f,.78f,.48f),()=>StartLevel(save.unlockedLevel),new Vector2(.10f,.46f),new Vector2(.90f,.54f));
 
             // Secondary actions
-            Button(bg.transform,"STORE",19,card,ShowStore,new Vector2(.10f,.38f),new Vector2(.43f,.44f));
-            Button(bg.transform,"HOW TO PLAY",19,card,ShowRules,new Vector2(.57f,.38f),new Vector2(.90f,.44f));
+            Button(bg.transform,"STORE",18,card,ShowStore,new Vector2(.06f,.38f),new Vector2(.30f,.44f));
+            Button(bg.transform,"HOW TO PLAY",18,card,ShowRules,new Vector2(.35f,.38f),new Vector2(.65f,.44f));
+            Button(bg.transform,"DAILY",18,card,StartDaily,new Vector2(.70f,.38f),new Vector2(.94f,.44f));
+            Button(bg.transform,"GOLDEN",18,card,StartGolden,new Vector2(.06f,.30f),new Vector2(.30f,.36f));
+            Button(bg.transform,"WEEKLY",18,card,ShowWeekly,new Vector2(.35f,.30f),new Vector2(.65f,.36f));
+            Button(bg.transform,"SETTINGS",18,card,ShowSettings,new Vector2(.70f,.30f),new Vector2(.94f,.36f));
 
             // Progress snapshot
             var stats=Panel(bg.transform,new Color(1f,.985f,.965f),new Vector2(.10f,.20f),new Vector2(.90f,.34f));
@@ -346,11 +354,65 @@ namespace CapybaraGame
             Button(bg.transform, "BACK", 30, card, ShowHome, new Vector2(.18f,.12f), new Vector2(.82f,.20f));
         }
 
+        private void StartDaily()
+        {
+            string day = ChallengeService.TodayIdUtc();
+            if (ChallengeService.HasDailyResult(day)) { ShowDailyStatus(day); return; }
+            dailyMode = true; goldenMode = false; pendingHint = false; pendingReveal = false;
+            gameplay.LoadLevel(ChallengeService.DailyLevelId(day), characters.Active);
+            AnalyticsService.Track("daily_started", day);
+            ShowLevelReady();
+        }
+
+        private void StartGolden()
+        {
+            string day = ChallengeService.TodayIdUtc();
+            if (!ChallengeService.TryClaimGoldenAttempt(day)) { ShowGoldenStatus(); return; }
+            dailyMode = false; goldenMode = true; pendingHint = false; pendingReveal = false;
+            gameplay.LoadLevel(ChallengeService.DailyLevelId(day), characters.Active, 1);
+            AnalyticsService.Track("golden_started", day);
+            ShowLevelReady();
+        }
+
+        private void ShowDailyStatus(string day)
+        {
+            Clear();
+            var bg=Panel(canvas.transform,background,Vector2.zero,Vector2.one);
+            var result=ChallengeService.GetDailyResult(day);
+            Label(bg.transform,"DAILY",48,TextAnchor.MiddleCenter,text,new Vector2(.08f,.78f),new Vector2(.92f,.88f));
+            Label(bg.transform,result==null?"No result yet":$"TODAY'S SCORE  {result.treatScore}/3",28,TextAnchor.MiddleCenter,text,new Vector2(.08f,.58f),new Vector2(.92f,.68f));
+            Label(bg.transform,"The Daily accepts one eligible completed attempt.",18,TextAnchor.MiddleCenter,new Color(.50f,.45f,.41f),new Vector2(.08f,.50f),new Vector2(.92f,.56f));
+            Button(bg.transform,"BACK",28,card,ShowHome,new Vector2(.18f,.12f),new Vector2(.82f,.20f));
+        }
+
+        private void ShowGoldenStatus()
+        {
+            Clear();
+            var bg=Panel(canvas.transform,background,Vector2.zero,Vector2.one);
+            Label(bg.transform,"GOLDEN CHALLENGE",40,TextAnchor.MiddleCenter,text,new Vector2(.06f,.78f),new Vector2(.94f,.88f));
+            Label(bg.transform,"Today's Golden attempt is already used.",22,TextAnchor.MiddleCenter,text,new Vector2(.08f,.60f),new Vector2(.92f,.68f));
+            Label(bg.transform,$"Golden Treats  {ChallengeService.GoldenTreats(characters.Active)}",20,TextAnchor.MiddleCenter,new Color(.68f,.47f,.12f),new Vector2(.08f,.52f),new Vector2(.92f,.58f));
+            Button(bg.transform,"BACK",28,card,ShowHome,new Vector2(.18f,.12f),new Vector2(.82f,.20f));
+        }
+
+        private void ShowWeekly()
+        {
+            Clear();
+            var bg=Panel(canvas.transform,background,Vector2.zero,Vector2.one);
+            var score=WeeklyLeaderboardService.GetLocalScore();
+            Label(bg.transform,"WEEKLY",48,TextAnchor.MiddleCenter,text,new Vector2(.08f,.78f),new Vector2(.92f,.88f));
+            Label(bg.transform,$"{score.treatScore} TREATS",34,TextAnchor.MiddleCenter,new Color(.68f,.47f,.12f),new Vector2(.08f,.61f),new Vector2(.92f,.70f));
+            Label(bg.transform,$"{score.perfectDays} PERFECT DAYS",20,TextAnchor.MiddleCenter,text,new Vector2(.08f,.53f),new Vector2(.92f,.59f));
+            Label(bg.transform,"Your local weekly score. Server leaderboard integration is a release backend task.",16,TextAnchor.MiddleCenter,new Color(.50f,.45f,.41f),new Vector2(.10f,.40f),new Vector2(.90f,.50f));
+            Button(bg.transform,"BACK",28,card,ShowHome,new Vector2(.18f,.12f),new Vector2(.82f,.20f));
+        }
+
         private void StartLevel(int level)
         {
             if (!ProgressionModel.IsUnlocked(save, level)) level = save.unlockedLevel;
             pendingHint=false;
             pendingReveal=false;
+            dailyMode = false; goldenMode = false;
             save.currentLevel=level;
             SaveService.Save(save);
             gameplay.LoadLevel(level,characters.Active);
@@ -366,7 +428,7 @@ namespace CapybaraGame
                 board.SetSelected(hintRow,hintCol);
                 board.Refresh(gameplay.State);
             }
-            if(pendingReveal && gameplay.TryGetSolutionCell(out var revealRow,out var revealCol))
+            if(!dailyMode && !goldenMode && pendingReveal && gameplay.TryGetSolutionCell(out var revealRow,out var revealCol))
             {
                 gameplay.TapCell(revealRow,revealCol);
                 if(gameplay.CurrentState==GameplayState.Playing)RefreshGameplay();
@@ -476,7 +538,20 @@ namespace CapybaraGame
         {
             audioService.Play(SfxType.Completion);
             haptics.Play(HapticType.Celebration);
-            ProgressionModel.ApplyCompletion(save, gameplay.LevelId, reward);
+            if (goldenMode)
+            {
+                ChallengeService.AddGoldenTreats(gameplay.ActiveCharacter, 5);
+                AnalyticsService.Track("golden_completed", gameplay.LevelId.ToString());
+            }
+            else if (dailyMode)
+            {
+                ChallengeService.TryRecordDaily(ChallengeService.TodayIdUtc(), gameplay.LevelId, gameplay.State.livesRemaining, Mathf.Clamp(gameplay.State.livesRemaining,0,3));
+                AnalyticsService.Track("daily_completed", gameplay.State.livesRemaining.ToString());
+            }
+            else
+            {
+                ProgressionModel.ApplyCompletion(save, gameplay.LevelId, reward);
+            }
             gameplay.GrantReward();
             ShowResult(true, reward);
         }
@@ -510,8 +585,9 @@ namespace CapybaraGame
                 Label(rewardCard.transform,"+"+reward.Treats+" TREATS",22,TextAnchor.MiddleLeft,new Color(.68f,.47f,.12f),new Vector2(.06f,.45f),new Vector2(.52f,.90f));
                 Label(rewardCard.transform,"+"+reward.Coins+" COINS",22,TextAnchor.MiddleRight,new Color(.45f,.68f,.28f),new Vector2(.48f,.45f),new Vector2(.94f,.90f));
                 Label(rewardCard.transform,gameplay.State.livesRemaining+" "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter)+" remaining",16,TextAnchor.MiddleCenter,new Color(.50f,.44f,.40f),new Vector2(.06f,.05f),new Vector2(.94f,.45f));
-                Button(bg.transform,gameplay.LevelId<500?"NEXT LEVEL":"ALL LEVELS COMPLETE",28,new Color(.55f,.78f,.48f),()=>{
+                Button(bg.transform,(dailyMode||goldenMode)?"BACK TO HOME":gameplay.LevelId<500?"NEXT LEVEL":"ALL LEVELS COMPLETE",28,new Color(.55f,.78f,.48f),()=>{
                     gameplay.Advance();
+                    if(dailyMode||goldenMode){dailyMode=false;goldenMode=false;ShowHome();return;}
                     int next=LevelCatalog.NextLevel(gameplay.LevelId);
                     if(next>0)StartLevel(next); else ShowHome();
                 },new Vector2(.10f,.23f),new Vector2(.90f,.31f));
@@ -520,9 +596,9 @@ namespace CapybaraGame
             {
                 Label(rewardCard.transform,"No treats earned this attempt.",17,TextAnchor.MiddleCenter,new Color(.55f,.45f,.42f),new Vector2(.05f,.52f),new Vector2(.95f,.90f));
                 Label(rewardCard.transform,"Choose one recovery, then return to the puzzle.",15,TextAnchor.MiddleCenter,new Color(.50f,.44f,.40f),new Vector2(.05f,.08f),new Vector2(.95f,.50f));
-                Button(bg.transform,"WATCH AD  +1 "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter).ToUpper(),19,new Color(.55f,.78f,.48f),TryRewardedBerry,new Vector2(.08f,.14f),new Vector2(.48f,.21f));
-                Button(bg.transform,"BUY 1  ·  "+BerryReviveCost,19,new Color(.96f,.84f,.54f),BuyBerryRevive,new Vector2(.52f,.14f),new Vector2(.92f,.21f));
-                Button(bg.transform,"RETRY",20,card,()=>StartLevel(gameplay.LevelId),new Vector2(.28f,.07f),new Vector2(.72f,.12f));
+                Button(bg.transform,(dailyMode||goldenMode)?"BACK TO HOME":"WATCH AD  +1 "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter).ToUpper(),19,new Color(.55f,.78f,.48f),TryRewardedBerry,new Vector2(.08f,.14f),new Vector2(.48f,.21f));
+                Button(bg.transform,dailyMode||goldenMode?"": "BUY 1  ·  "+BerryReviveCost,19,new Color(.96f,.84f,.54f),BuyBerryRevive,new Vector2(.52f,.14f),new Vector2(.92f,.21f));
+                Button(bg.transform,(dailyMode||goldenMode)?"BACK TO HOME":"RETRY",20,card,()=>dailyMode||goldenMode?ShowHome():StartLevel(gameplay.LevelId),new Vector2(.28f,.07f),new Vector2(.72f,.12f));
             }
         }
 
