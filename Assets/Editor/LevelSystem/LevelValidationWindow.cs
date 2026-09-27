@@ -66,7 +66,7 @@ namespace CapybaraGame.Editor
             }
             else
             {
-                Debug.LogWarning("Persistent LevelDatabase asset has not been generated yet.");
+                Fail(ref failures, "Persistent LevelDatabase asset has not been generated yet.");
             }
 
             if (puzzleAsset != null)
@@ -76,7 +76,7 @@ namespace CapybaraGame.Editor
             }
             else
             {
-                Debug.LogWarning("Persistent PuzzleDatabase asset has not been generated yet.");
+                Fail(ref failures, "Persistent PuzzleDatabase asset has not been generated yet.");
             }
 
             string result = failures == 0
