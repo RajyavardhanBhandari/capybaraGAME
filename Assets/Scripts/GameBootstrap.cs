@@ -598,7 +598,7 @@ namespace CapybaraGame
                 Label(rewardCard.transform,"Choose one recovery, then return to the puzzle.",15,TextAnchor.MiddleCenter,new Color(.50f,.44f,.40f),new Vector2(.05f,.08f),new Vector2(.95f,.50f));
                 Button(bg.transform,(dailyMode||goldenMode)?"BACK TO HOME":"WATCH AD  +1 "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter).ToUpper(),19,new Color(.55f,.78f,.48f),()=>{if(dailyMode||goldenMode)ShowHome();else TryRewardedBerry();},new Vector2(.08f,.14f),new Vector2(.48f,.21f));
                 Button(bg.transform,dailyMode||goldenMode?"BACK TO HOME":"BUY 1  ·  "+BerryReviveCost,19,new Color(.96f,.84f,.54f),()=>{if(dailyMode||goldenMode)ShowHome();else BuyBerryRevive();},new Vector2(.52f,.14f),new Vector2(.92f,.21f));
-                Button(bg.transform,(dailyMode||goldenMode)?"BACK TO HOME":"RETRY",20,card,()=>dailyMode||goldenMode?ShowHome():StartLevel(gameplay.LevelId),new Vector2(.28f,.07f),new Vector2(.72f,.12f));
+                Button(bg.transform,(dailyMode||goldenMode)?"BACK TO HOME":"RETRY",20,card,()=>{if(dailyMode||goldenMode)ShowHome();else StartLevel(gameplay.LevelId);},new Vector2(.28f,.07f),new Vector2(.72f,.12f));
             }
         }
 
