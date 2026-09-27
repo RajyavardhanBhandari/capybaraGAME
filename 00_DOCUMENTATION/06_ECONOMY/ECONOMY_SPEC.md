@@ -15,14 +15,27 @@ Sources:
 Sinks:
 - character unlocks
 - cosmetics
-- Hint
-- Reveal
-- Extra Life
+- Store-only Hint purchases
+- Store-only Reveal purchases
+- post-failure single-resource recovery
 
-### Lives
+### Character-specific mistake resources
 Three per normal puzzle attempt.
 
-Lives are consumed by incorrect placement. They are not purchased as an energy system.
+They are displayed using the active character's resource:
+- Capybara: berries
+- Cat: fish
+- Dog: bones
+- Penguin: fish
+- Panda: bamboo
+
+They are consumed by incorrect placement. They are not an energy system.
+
+Recovery after failure:
+- watch one rewarded ad for +1 resource where available, or
+- buy exactly 1 resource for 500 coins
+
+Recovery is only offered after the attempt reaches zero resources.
 
 ### Treats
 Competitive/performance points.
@@ -43,9 +56,9 @@ Common character: 500–1,000 coins.
 Rare: 1,500–2,500.
 Epic: 3,000–5,000.
 
-Hint: ~100.
-Reveal: ~175.
-Extra Life: ~250.
+Hint: ~100 coins per aid.
+Reveal: ~175 coins per aid.
+Single post-failure berry/resource: 500 coins.
 
 These are tuning ranges, not final prices.
 
