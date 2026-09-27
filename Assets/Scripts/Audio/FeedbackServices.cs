@@ -11,14 +11,17 @@ namespace CapybaraGame.Audio
         Invalid,
         LifeLost,
         Completion,
-        Reward
+        Reward,
+        PerfectCompletion,
+        Unlock,
+        NextLevel
     }
 
     public sealed class AudioService : MonoBehaviour
     {
         private AudioSource sfxSource;
         private AudioSource musicSource;
-        private readonly AudioClip[] generated = new AudioClip[7];
+        private readonly AudioClip[] generated = new AudioClip[10];
         private bool enabledState = true;
 
         public void Initialize(LocalSave save)
@@ -38,7 +41,7 @@ namespace CapybaraGame.Audio
             if (!enabledState || sfxSource == null) return;
             int index = (int)type;
             if (index < 0 || index >= generated.Length || generated[index] == null) return;
-            sfxSource.PlayOneShot(generated[index], type == SfxType.Completion ? 0.7f : 0.45f);
+            sfxSource.PlayOneShot(generated[index], type == SfxType.Completion || type == SfxType.PerfectCompletion ? 0.7f : 0.45f);
         }
 
         private void GenerateClips()
@@ -50,6 +53,9 @@ namespace CapybaraGame.Audio
             generated[(int)SfxType.LifeLost] = Tone("LifeLost", 140f, 0.12f);
             generated[(int)SfxType.Completion] = Chord("Completion", 520f, 660f, 0.28f);
             generated[(int)SfxType.Reward] = Chord("Reward", 660f, 880f, 0.18f);
+            generated[(int)SfxType.PerfectCompletion] = Chord("PerfectCompletion", 660f, 880f, 0.32f);
+            generated[(int)SfxType.Unlock] = Chord("Unlock", 520f, 780f, 0.22f);
+            generated[(int)SfxType.NextLevel] = Tone("NextLevel", 700f, 0.08f);
         }
 
         private static AudioClip Tone(string name, float frequency, float duration)

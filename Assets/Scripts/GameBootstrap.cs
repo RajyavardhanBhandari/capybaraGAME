@@ -35,6 +35,8 @@ namespace CapybaraGame
         private HapticService haptics;
         private BoardView board;
         private Canvas canvas;
+        private RectTransform safeAreaRoot;
+        private Text resourceText;
         private Font font;
         private Sprite roundedSprite;
         private readonly System.Collections.Generic.List<GameObject> spawned = new System.Collections.Generic.List<GameObject>();
@@ -91,7 +93,7 @@ namespace CapybaraGame
             cameraObject.transform.SetParent(transform, false);
             var camera = cameraObject.GetComponent<Camera>();
             camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = Color.black;
+            camera.backgroundColor = background;
             camera.orthographic = true;
             camera.orthographicSize = 5f;
             camera.transform.position = new Vector3(0f, 0f, -10f);
@@ -103,6 +105,13 @@ namespace CapybaraGame
             canvasObject.transform.SetParent(transform, false);
             canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+
+            safeAreaRoot = new GameObject("SafeArea", typeof(RectTransform)).GetComponent<RectTransform>();
+            safeAreaRoot.SetParent(canvas.transform, false);
+            safeAreaRoot.anchorMin = Vector2.zero;
+            safeAreaRoot.anchorMax = Vector2.one;
+            safeAreaRoot.offsetMin = safeAreaRoot.offsetMax = Vector2.zero;
+            safeAreaRoot.gameObject.AddComponent<SafeAreaFitter>();
 
             var scaler = canvasObject.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -152,6 +161,8 @@ namespace CapybaraGame
             var image=go.GetComponent<Image>();
             image.color=color;
             if(min!=Vector2.zero || max!=Vector2.one) image.sprite=RoundedSprite();
+            if (min == Vector2.zero && max == Vector2.one)
+                go.AddComponent<ScreenPanelAnimator>().Play(save != null && save.reducedMotion);
             image.raycastTarget=false;
             var shadow=go.GetComponent<Shadow>();
             shadow.effectColor=new Color(.15f,.12f,.10f,.08f);
@@ -191,7 +202,11 @@ namespace CapybaraGame
             feel.reducedMotion=save != null && save.reducedMotion;
             button.colors=new ColorBlock{normalColor=fill,highlightedColor=Color.Lerp(fill,Color.white,.12f),pressedColor=Color.Lerp(fill,Color.black,.08f),selectedColor=fill,disabledColor=new Color(fill.r,fill.g,fill.b,.45f),colorMultiplier=1f};
             button.navigation=new Navigation{mode=Navigation.Mode.None};
-            if(action!=null)button.onClick.AddListener(action);
+            if(action!=null)button.onClick.AddListener(() => {
+                audioService?.Play(SfxType.Button);
+                haptics?.Play(HapticType.Tiny);
+                action();
+            });
 
             var textObject=new GameObject("ButtonText",typeof(Text));
             textObject.transform.SetParent(go.transform,false);
@@ -448,7 +463,7 @@ namespace CapybaraGame
             var levelCard=Panel(bg.transform,card,new Vector2(.19f,.915f),new Vector2(.48f,.975f));
             Label(levelCard.transform,"LEVEL "+gameplay.LevelId,21,TextAnchor.MiddleCenter,text,Vector2.zero,Vector2.one);
             var resourceCard=Panel(bg.transform,card,new Vector2(.52f,.915f),new Vector2(.95f,.975f));
-            Label(resourceCard.transform,CharacterCatalog.ResourceIcon(gameplay.ActiveCharacter)+"  "+gameplay.State.livesRemaining,21,TextAnchor.MiddleCenter,new Color(.55f,.38f,.16f),Vector2.zero,Vector2.one);
+            resourceText = Label(resourceCard.transform,CharacterCatalog.ResourceIcon(gameplay.ActiveCharacter)+"  "+gameplay.State.livesRemaining+" "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter),19,TextAnchor.MiddleCenter,new Color(.55f,.38f,.16f),Vector2.zero,Vector2.one);
 
             // Character identity strip
             var identity=Panel(bg.transform,new Color(1f,.985f,.965f),new Vector2(.07f,.855f),new Vector2(.93f,.905f));
@@ -527,16 +542,16 @@ namespace CapybaraGame
         {
             if(board==null||gameplay.State==null)return;
             board.Refresh(gameplay.State);
-            var labels=FindObjectsOfType<Text>();
-            string target=$"{CharacterCatalog.ResourceIcon(gameplay.ActiveCharacter)}  {gameplay.State.livesRemaining} {CharacterCatalog.ResourceName(gameplay.ActiveCharacter)}";
-            foreach(var t in labels)
-                if(t.text!=null && (t.text.Contains("berries")||t.text.Contains("fish")||t.text.Contains("bones")||t.text.Contains("bamboo")))
-                    t.text=target;
+            if (resourceText != null)
+                resourceText.text = CharacterCatalog.ResourceIcon(gameplay.ActiveCharacter)+"  "+gameplay.State.livesRemaining+" "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter);
         }
 
         private void OnCompleted(RewardResult reward)
         {
             audioService.Play(SfxType.Completion);
+            audioService.Play(SfxType.Reward);
+            if (gameplay.State != null && gameplay.State.livesRemaining >= GameplayController.MaxLives)
+                audioService.Play(SfxType.PerfectCompletion);
             haptics.Play(HapticType.Celebration);
             if (goldenMode)
             {
@@ -589,6 +604,7 @@ namespace CapybaraGame
                     gameplay.Advance();
                     if(dailyMode||goldenMode){dailyMode=false;goldenMode=false;ShowHome();return;}
                     int next=LevelCatalog.NextLevel(gameplay.LevelId);
+                    audioService.Play(SfxType.NextLevel);
                     if(next>0)StartLevel(next); else ShowHome();
                 },new Vector2(.10f,.23f),new Vector2(.90f,.31f));
             }
@@ -596,8 +612,11 @@ namespace CapybaraGame
             {
                 Label(rewardCard.transform,"No treats earned this attempt.",17,TextAnchor.MiddleCenter,new Color(.55f,.45f,.42f),new Vector2(.05f,.52f),new Vector2(.95f,.90f));
                 Label(rewardCard.transform,"Choose one recovery, then return to the puzzle.",15,TextAnchor.MiddleCenter,new Color(.50f,.44f,.40f),new Vector2(.05f,.08f),new Vector2(.95f,.50f));
-                Button(bg.transform,(dailyMode||goldenMode)?"BACK TO HOME":"WATCH AD  +1 "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter).ToUpper(),19,new Color(.55f,.78f,.48f),()=>{if(dailyMode||goldenMode)ShowHome();else TryRewardedBerry();},new Vector2(.08f,.14f),new Vector2(.48f,.21f));
-                Button(bg.transform,dailyMode||goldenMode?"BACK TO HOME":"BUY 1  ·  "+BerryReviveCost,19,new Color(.96f,.84f,.54f),()=>{if(dailyMode||goldenMode)ShowHome();else BuyBerryRevive();},new Vector2(.52f,.14f),new Vector2(.92f,.21f));
+                if (dailyMode || goldenMode || !gameplay.RecoveryUsed)
+                {
+                    Button(bg.transform,(dailyMode||goldenMode)?"BACK TO HOME":"WATCH AD  +1 "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter).ToUpper(),19,new Color(.55f,.78f,.48f),()=>{if(dailyMode||goldenMode)ShowHome();else TryRewardedBerry();},new Vector2(.08f,.14f),new Vector2(.48f,.21f));
+                    Button(bg.transform,dailyMode||goldenMode?"BACK TO HOME":"BUY 1  ·  "+BerryReviveCost,19,new Color(.96f,.84f,.54f),()=>{if(dailyMode||goldenMode)ShowHome();else BuyBerryRevive();},new Vector2(.52f,.14f),new Vector2(.92f,.21f));
+                }
                 Button(bg.transform,(dailyMode||goldenMode)?"BACK TO HOME":"RETRY",20,card,()=>{if(dailyMode||goldenMode)ShowHome();else StartLevel(gameplay.LevelId);},new Vector2(.28f,.07f),new Vector2(.72f,.12f));
             }
         }

@@ -16,9 +16,10 @@ namespace CapybaraGame.Gameplay
         public int StartingLives { get; private set; } = PuzzleRules.StartingLives;
         public const int MaxLives=PuzzleRules.StartingLives;
         public PuzzleDefinition Puzzle{get;private set;} public PuzzleState State{get;private set;} public GameplayState CurrentState{get;private set;}=GameplayState.Loading; public int LevelId{get;private set;} public CharacterId ActiveCharacter{get;private set;} public RewardResult LastReward{get;private set;}
+        public bool RecoveryUsed { get; private set; }
         public event Action<GameplayEvent> EventRaised; public event Action StateChanged; public event Action<RewardResult> Completed; public event Action Failed;
         public void LoadLevel(int levelId,CharacterId character){LoadLevel(levelId,character,PuzzleRules.StartingLives);}
-        public void LoadLevel(int levelId,CharacterId character,int startingLives){LevelId=levelId;ActiveCharacter=character;StartingLives=Math.Max(1,startingLives);CurrentState=GameplayState.Loading;var puzzle=ProductionPuzzleRepository.Get(levelId);LoadPuzzle(puzzle,levelId,character);}
+        public void LoadLevel(int levelId,CharacterId character,int startingLives){LevelId=levelId;ActiveCharacter=character;StartingLives=Math.Max(1,startingLives);CurrentState=GameplayState.Loading;RecoveryUsed=false;var puzzle=ProductionPuzzleRepository.Get(levelId);LoadPuzzle(puzzle,levelId,character);}
         public void LoadPuzzle(PuzzleDefinition puzzle,int levelId,CharacterId character){if(puzzle==null)throw new ArgumentNullException(nameof(puzzle));UnityEngine.Time.timeScale=1f;Puzzle=puzzle.Clone();LevelId=levelId;ActiveCharacter=character;State=new PuzzleState(Puzzle.id,Puzzle.CellCount);State.livesRemaining=StartingLives;State.status=PuzzleStatus.Playing;CurrentState=GameplayState.Playing;LastReward=default;Raise(GameplayEventType.PuzzleStarted);StateChanged?.Invoke();}
         public void MarkCell(int row,int column)
         {
@@ -42,7 +43,8 @@ namespace CapybaraGame.Gameplay
         private void Complete(){if(CurrentState!=GameplayState.Playing)return;State.status=PuzzleStatus.Solved;CurrentState=GameplayState.Completed;LastReward=RewardCalculator.CalculateCompletion(State.livesRemaining,LevelRewardConfig.Default);Raise(GameplayEventType.PuzzleCompleted,-1,-1,State.livesRemaining);Completed?.Invoke(LastReward);}
         public bool ReviveWithBerry()
         {
-            if (CurrentState != GameplayState.Failed || State == null || State.livesRemaining > 0) return false;
+            if (CurrentState != GameplayState.Failed || State == null || State.livesRemaining > 0 || RecoveryUsed) return false;
+            RecoveryUsed = true;
             State.livesRemaining = 1;
             State.status = PuzzleStatus.Playing;
             CurrentState = GameplayState.Playing;
