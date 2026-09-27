@@ -70,13 +70,15 @@ namespace CapybaraGame.UI
         public void PlayPlacement()
         {
             if (reducedMotion) return;
-            StartCoroutine(PopRoutine());
+            if (idleRoutine != null) StopCoroutine(idleRoutine);
+            StartCoroutine(PopAndResumeIdleRoutine());
         }
 
         public void PlayError()
         {
             if (reducedMotion) return;
-            StartCoroutine(ShakeRoutine());
+            if (idleRoutine != null) StopCoroutine(idleRoutine);
+            StartCoroutine(ShakeAndResumeIdleRoutine());
         }
 
         private void Clear()
@@ -167,6 +169,7 @@ namespace CapybaraGame.UI
                 float duration = Random.Range(2.4f, 3.8f);
                 float elapsed = 0f;
                 var root = transform as RectTransform;
+                Vector2 start = root != null ? root.anchoredPosition : Vector2.zero;
 
                 float bobAmount = character == CharacterId.Capybara ? 1.8f : 1.2f;
                 while (elapsed < duration)
@@ -174,7 +177,7 @@ namespace CapybaraGame.UI
                     elapsed += Time.unscaledDeltaTime;
                     phase += Time.unscaledDeltaTime * 2.0f;
                     float bob = Mathf.Sin(phase) * bobAmount;
-                    if (headTransform != null) headTransform.anchoredPosition = new Vector2(0f, bob);
+                    if (root != null) root.anchoredPosition = start + new Vector2(0f, bob);
                     if (headTransform != null)
                         headTransform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(phase * .55f) * .7f);
                     if (leftCheekTransform != null && rightCheekTransform != null)
@@ -233,6 +236,19 @@ namespace CapybaraGame.UI
                 earR.rectTransform.localRotation = Quaternion.Euler(0f, 0f, rightStart - wiggle);
                 yield return null;
             }
+        }
+
+
+        private System.Collections.IEnumerator PopAndResumeIdleRoutine()
+        {
+            yield return PopRoutine();
+            if (built && !reducedMotion) idleRoutine = StartCoroutine(IdleRoutine());
+        }
+
+        private System.Collections.IEnumerator ShakeAndResumeIdleRoutine()
+        {
+            yield return ShakeRoutine();
+            if (built && !reducedMotion) idleRoutine = StartCoroutine(IdleRoutine());
         }
 
         private System.Collections.IEnumerator PopRoutine()
