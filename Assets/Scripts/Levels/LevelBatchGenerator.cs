@@ -143,6 +143,7 @@ namespace CapybaraGame.Levels
             var remaining = new List<Candidate>(pool);
             var selected = new List<Selected>(config.launchLevelCount);
             var recent = new Queue<PuzzleDefinition>();
+            float lastHardDifficulty = -1f;
 
             for (int levelNumber = 1; levelNumber <= config.launchLevelCount; levelNumber++)
             {
@@ -158,6 +159,7 @@ namespace CapybaraGame.Levels
                     var puzzle = candidate.puzzle;
                     if (band != null && !band.allowedGridSizes.Contains(puzzle.rows)) continue;
                     if (hard && puzzle.difficulty < config.difficultyProfile.MediumMax) continue;
+                    if (hard && puzzle.difficulty <= lastHardDifficulty) continue;
                     if (ViolatesRecentVariety(puzzle, target, recent, config.variety))
                     {
                         report.SimilarCandidatesRejected++;
@@ -175,6 +177,7 @@ namespace CapybaraGame.Levels
                     foreach (var candidate in remaining)
                     {
                         if (ViolatesRecentVariety(candidate.puzzle, target, recent, config.variety)) continue;
+                        if (hard && candidate.puzzle.difficulty <= lastHardDifficulty) continue;
                         float cost = Math.Abs(candidate.puzzle.difficulty - targetScore);
                         if (cost < bestCost) { best = candidate; bestCost = cost; }
                     }
@@ -202,7 +205,11 @@ namespace CapybaraGame.Levels
                 Increment(report.DifficultyDistribution, definition.Difficulty);
                 Increment(report.GridDistribution, puzzle.rows);
                 Increment(report.StyleDistribution, definition.Style);
-                if (hard) report.HardChallenges++;
+                if (hard)
+                {
+                    report.HardChallenges++;
+                    lastHardDifficulty = puzzle.difficulty;
+                }
             }
 
             report.SelectedLevels = selected.Count;
