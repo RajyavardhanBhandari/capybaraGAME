@@ -36,34 +36,6 @@ namespace CapybaraGame.Levels
     {
         public int databaseVersion = 1;
         public int generationVersion = 1;
-        public List<PuzzleRecord> puzzles = new List<PuzzleRecord>();
-    }
-
-    [Serializable]
-    public sealed class PuzzleRecord
-    {
-        public string PuzzleId;
-        public PuzzleDefinitionData Data;
-
-        public PuzzleRecord Clone() => new PuzzleRecord { PuzzleId = PuzzleId, Data = Data };
-    }
-
-    [Serializable]
-    public sealed class PuzzleDefinitionData
-    {
-        public string id;
-        public int seed;
-        public int rows;
-        public int columns;
-        public int regionCount;
-        public int[] regions;
-        public int[] solution;
-        public float difficulty;
-        public string difficultyBand;
-        public string category;
-        public string fingerprint;
-        public string generatorVersion;
-        public int solutionCount;
-        public bool isHardChallenge;
+        public List<PuzzleDefinition> puzzles = new List<PuzzleDefinition>();
     }
 }
