@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using CapybaraGame.Core;
+using CapybaraGame.Gameplay;
 using CapybaraGame.Levels;
 
 namespace CapybaraGame.Progression
@@ -68,7 +69,6 @@ namespace CapybaraGame.Progression
             if (level == save.unlockedLevel && level < LevelCatalog.MaxLevel)
                 save.unlockedLevel = level + 1;
 
-            // Rewards are granted once per level. Replays never duplicate permanent currency.
             if (firstCompletion)
             {
                 save.coins += reward.Coins;
