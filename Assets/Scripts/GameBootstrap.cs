@@ -35,6 +35,9 @@ namespace CapybaraGame
         private Canvas canvas;
         private Font font;
         private readonly System.Collections.Generic.List<GameObject> spawned = new System.Collections.Generic.List<GameObject>();
+        private Text livesLabel;
+        private Text coinsLabel;
+        private bool transitionBusy;
         private int levelSelectPage;
         private readonly Color background = new Color(.965f, .945f, .925f);
         private readonly Color card = new Color(1f, .985f, .965f);
@@ -129,7 +132,24 @@ namespace CapybaraGame
             rect.offsetMin = rect.offsetMax = Vector2.zero;
             go.GetComponent<Image>().color = fill;
             var button = go.GetComponent<Button>();
-            if (action != null) button.onClick.AddListener(action);
+            var colors = button.colors;
+            colors.normalColor = fill;
+            colors.highlightedColor = Color.Lerp(fill, Color.white, .08f);
+            colors.pressedColor = Color.Lerp(fill, Color.black, .08f);
+            colors.selectedColor = colors.highlightedColor;
+            colors.disabledColor = Color.Lerp(fill, Color.white, .35f);
+            colors.fadeDuration = .05f;
+            button.colors = colors;
+            if (action != null)
+            {
+                button.onClick.AddListener(() =>
+                {
+                    if (transitionBusy) return;
+                    audioService.Play(SfxType.Button);
+                    haptics.Play(HapticType.Tiny);
+                    action.Invoke();
+                });
+            }
 
             var textObject = new GameObject("ButtonText", typeof(Text));
             textObject.transform.SetParent(go.transform, false);
@@ -166,11 +186,10 @@ namespace CapybaraGame
             Clear();
             var bg = Panel(canvas.transform, background, Vector2.zero, Vector2.one);
             Label(bg.transform, "LEVEL SELECT", 50, TextAnchor.MiddleCenter, text, new Vector2(.06f,.88f), new Vector2(.94f,.96f));
-            Label(bg.transform, $"COMPLETED  {ProgressionModel.GetCompletedCount(save)} / {LevelCatalog.MaxLevel}    PAGE {levelSelectPage + 1}/{pageCount}", 22, TextAnchor.MiddleCenter, text, new Vector2(.04f,.83f), new Vector2(.96f,.88f));
-
             const int columns = 4;
             const int pageSize = 40;
             int pageCount = (LevelCatalog.MaxLevel + pageSize - 1) / pageSize;
+            Label(bg.transform, $"COMPLETED  {ProgressionModel.GetCompletedCount(save)} / {LevelCatalog.MaxLevel}    PAGE {levelSelectPage + 1}/{pageCount}", 22, TextAnchor.MiddleCenter, text, new Vector2(.04f,.83f), new Vector2(.96f,.88f));
             levelSelectPage = Mathf.Clamp(levelSelectPage, 0, pageCount - 1);
             int firstLevel = levelSelectPage * pageSize + 1;
             for (int i = 0; i < pageSize; i++)
@@ -234,7 +253,7 @@ namespace CapybaraGame
             Label(bg.transform, $"LEVEL {gameplay.LevelId}", 38, TextAnchor.MiddleCenter, text, new Vector2(.20f,.92f), new Vector2(.80f,.98f));
             Button(bg.transform, "Ⅱ", 28, card, PauseGame, new Vector2(.84f,.92f), new Vector2(.95f,.98f));
 
-            Label(bg.transform, $"LIVES  {LifeText(gameplay.State.livesRemaining)}", 27, TextAnchor.MiddleCenter, text, new Vector2(.06f,.84f), new Vector2(.48f,.90f));
+            livesLabel = Label(bg.transform, $"LIVES  {LifeText(gameplay.State.livesRemaining)}", 27, TextAnchor.MiddleCenter, text, new Vector2(.06f,.84f), new Vector2(.48f,.90f));
             Label(bg.transform, $"{CharacterCatalog.Name(gameplay.ActiveCharacter)}  •  {puzzle.difficultyBand}", 23, TextAnchor.MiddleCenter, text, new Vector2(.50f,.84f), new Vector2(.94f,.90f));
 
             var boardObject = new GameObject("Board", typeof(RectTransform));
@@ -249,7 +268,7 @@ namespace CapybaraGame
             Button(bg.transform, "HINT", 24, card, () => UseHint(), new Vector2(.06f,.18f), new Vector2(.30f,.24f));
             Button(bg.transform, "REVEAL", 24, card, () => UseReveal(), new Vector2(.35f,.18f), new Vector2(.65f,.24f));
             Button(bg.transform, "EXTRA LIFE", 22, card, () => UseExtraLife(), new Vector2(.70f,.18f), new Vector2(.94f,.24f));
-            Label(bg.transform, $"COINS  {save.coins}", 22, TextAnchor.MiddleCenter, text, new Vector2(.08f,.08f), new Vector2(.92f,.13f));
+            coinsLabel = Label(bg.transform, $"COINS  {save.coins}", 22, TextAnchor.MiddleCenter, text, new Vector2(.08f,.08f), new Vector2(.92f,.13f));
         }
 
         private static string LifeText(int lives)
@@ -294,12 +313,10 @@ namespace CapybaraGame
         {
             if (board == null || gameplay.State == null) return;
             board.Refresh(gameplay.State);
-            var livesLabel = FindObjectsOfType<Text>();
-            foreach (var t in livesLabel)
-            {
-                if (t.text != null && t.text.StartsWith("LIVES  "))
-                    t.text = $"LIVES  {LifeText(gameplay.State.livesRemaining)}";
-            }
+            if (livesLabel != null)
+                livesLabel.text = $"LIVES  {LifeText(gameplay.State.livesRemaining)}";
+            if (coinsLabel != null)
+                coinsLabel.text = $"COINS  {save.coins}";
         }
 
         private void OnCompleted(RewardResult reward)
@@ -320,6 +337,7 @@ namespace CapybaraGame
 
         private void ShowResult(bool solved, RewardResult reward)
         {
+            transitionBusy = false;
             Clear();
             var bg = Panel(canvas.transform, background, Vector2.zero, Vector2.one);
             Label(bg.transform, solved ? "🎉 COMPLETE" : "PUZZLE FAILED", 52, TextAnchor.MiddleCenter, text, new Vector2(.08f,.68f), new Vector2(.92f,.80f));
@@ -343,6 +361,7 @@ namespace CapybaraGame
 
         private void PauseGame()
         {
+            if (gameplay.CurrentState != GameplayState.Playing) return;
             gameplay.Pause();
             Clear();
             var bg = Panel(canvas.transform, background, Vector2.zero, Vector2.one);
@@ -355,7 +374,7 @@ namespace CapybaraGame
         private void UseHint()
         {
             const int cost = 100;
-            if (save.coins < cost) return;
+            if (gameplay.CurrentState != GameplayState.Playing || save.coins < cost) return;
             if (!gameplay.TryGetSolutionCell(out var row, out var col)) return;
             save.coins -= cost;
             SaveService.Save(save);
@@ -366,7 +385,7 @@ namespace CapybaraGame
         private void UseReveal()
         {
             const int cost = 175;
-            if (save.coins < cost) return;
+            if (gameplay.CurrentState != GameplayState.Playing || save.coins < cost) return;
             if (!gameplay.TryGetSolutionCell(out var row, out var col)) return;
             save.coins -= cost;
             SaveService.Save(save);
@@ -377,7 +396,7 @@ namespace CapybaraGame
         private void UseExtraLife()
         {
             const int cost = 250;
-            if (save.coins < cost) return;
+            if (gameplay.CurrentState != GameplayState.Playing || gameplay.State.livesRemaining >= GameplayController.MaxLives || save.coins < cost) return;
             save.coins -= cost;
             gameplay.State.livesRemaining = Mathf.Min(GameplayController.MaxLives, gameplay.State.livesRemaining + 1);
             SaveService.Save(save);
