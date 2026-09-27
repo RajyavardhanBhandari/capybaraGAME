@@ -269,7 +269,7 @@ namespace CapybaraGame
             Label(bg.transform,"DOUBLE-TAP  PLACE",17,TextAnchor.MiddleCenter,new Color(.48f,.43f,.39f),new Vector2(.53f,.23f),new Vector2(.94f,.28f));
             Button(bg.transform,"HINT  · 100",20,card,UseHint,new Vector2(.06f,.14f),new Vector2(.29f,.20f));
             Button(bg.transform,"REVEAL  · 175",20,card,UseReveal,new Vector2(.385f,.14f),new Vector2(.615f,.20f));
-            Button(bg.transform,"EXTRA  · 250",20,card,UseExtraLife,new Vector2(.71f,.14f),new Vector2(.94f,.20f));
+            Button(bg.transform,"MORE  · 250",20,card,UseExtraToken,new Vector2(.71f,.14f),new Vector2(.94f,.20f));
             Label(bg.transform,$"🪙 {save.coins}",19,TextAnchor.MiddleCenter,new Color(.45f,.40f,.36f),new Vector2(.25f,.07f),new Vector2(.75f,.12f));
         }
 
@@ -407,7 +407,7 @@ namespace CapybaraGame
             if (gameplay.CurrentState == GameplayState.Playing) RefreshGameplay();
         }
 
-        private void UseExtraLife()
+        private void UseExtraToken()
         {
             const int cost = 250;
             if (save.coins < cost) return;
