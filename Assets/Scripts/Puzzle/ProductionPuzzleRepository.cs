@@ -45,6 +45,7 @@ namespace CapybaraGame.Puzzle
 
             if (puzzle == null)
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 var result = PuzzleGenerator.Generate(definition.CreatePuzzleConfig());
                 if (result.Puzzle == null)
                 {
@@ -59,6 +60,11 @@ namespace CapybaraGame.Puzzle
 
                 puzzle = result.Puzzle;
                 puzzle.id = definition.PuzzleId;
+#else
+                throw new InvalidOperationException(
+                    "Production level database is missing puzzle " + definition.PuzzleId +
+                    " for level " + level + ". Generate the Phase 5 production database before building.");
+#endif
             }
 
             puzzle.isHardChallenge = definition.IsHardChallenge;
