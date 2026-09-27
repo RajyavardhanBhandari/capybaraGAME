@@ -20,6 +20,7 @@ namespace CapybaraGame.UI
         private RectTransform leftCheekTransform;
         private RectTransform rightCheekTransform;
         private Coroutine idleRoutine;
+        private Color baseCheek = new Color(1f,.50f,.52f,.55f);
 
         private static Sprite CircleSprite
         {
@@ -79,6 +80,30 @@ namespace CapybaraGame.UI
             if (reducedMotion) return;
             if (idleRoutine != null) StopCoroutine(idleRoutine);
             StartCoroutine(ShakeAndResumeIdleRoutine());
+        }
+
+        public void PlayEmotion(string emotion)
+        {
+            if (reducedMotion) return;
+            if (idleRoutine != null) StopCoroutine(idleRoutine);
+            StartCoroutine(EmotionRoutine(emotion));
+        }
+
+        private System.Collections.IEnumerator EmotionRoutine(string emotion)
+        {
+            float t = 0f;
+            Vector3 start = transform.localScale;
+            float scale = emotion == "success" ? 1.08f : emotion == "hint" ? 1.03f : .97f;
+            while (t < .22f)
+            {
+                t += Time.unscaledDeltaTime;
+                float p = Mathf.Clamp01(t / .22f);
+                float eased = Mathf.Sin(p * Mathf.PI);
+                transform.localScale = Vector3.Lerp(start, start * scale, eased);
+                yield return null;
+            }
+            transform.localScale = start;
+            if (built && !reducedMotion) idleRoutine = StartCoroutine(IdleRoutine());
         }
 
         private void Clear()
