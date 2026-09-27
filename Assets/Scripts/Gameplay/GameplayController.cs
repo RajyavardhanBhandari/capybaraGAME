@@ -13,11 +13,13 @@ namespace CapybaraGame.Gameplay
     }
     public sealed class GameplayController
     {
+        public int StartingLives { get; private set; } = PuzzleRules.StartingLives;
         public const int MaxLives=PuzzleRules.StartingLives;
         public PuzzleDefinition Puzzle{get;private set;} public PuzzleState State{get;private set;} public GameplayState CurrentState{get;private set;}=GameplayState.Loading; public int LevelId{get;private set;} public CharacterId ActiveCharacter{get;private set;} public RewardResult LastReward{get;private set;}
         public event Action<GameplayEvent> EventRaised; public event Action StateChanged; public event Action<RewardResult> Completed; public event Action Failed;
-        public void LoadLevel(int levelId,CharacterId character){LevelId=levelId;ActiveCharacter=character;CurrentState=GameplayState.Loading;var puzzle=ProductionPuzzleRepository.Get(levelId);LoadPuzzle(puzzle,levelId,character);}
-        public void LoadPuzzle(PuzzleDefinition puzzle,int levelId,CharacterId character){if(puzzle==null)throw new ArgumentNullException(nameof(puzzle));UnityEngine.Time.timeScale=1f;Puzzle=puzzle.Clone();LevelId=levelId;ActiveCharacter=character;State=new PuzzleState(Puzzle.id,Puzzle.CellCount);State.status=PuzzleStatus.Playing;CurrentState=GameplayState.Playing;LastReward=default;Raise(GameplayEventType.PuzzleStarted);StateChanged?.Invoke();}
+        public void LoadLevel(int levelId,CharacterId character){LoadLevel(levelId,character,PuzzleRules.StartingLives);}
+        public void LoadLevel(int levelId,CharacterId character,int startingLives){LevelId=levelId;ActiveCharacter=character;StartingLives=Math.Max(1,startingLives);CurrentState=GameplayState.Loading;var puzzle=ProductionPuzzleRepository.Get(levelId);LoadPuzzle(puzzle,levelId,character);}
+        public void LoadPuzzle(PuzzleDefinition puzzle,int levelId,CharacterId character){if(puzzle==null)throw new ArgumentNullException(nameof(puzzle));UnityEngine.Time.timeScale=1f;Puzzle=puzzle.Clone();LevelId=levelId;ActiveCharacter=character;State=new PuzzleState(Puzzle.id,Puzzle.CellCount);State.livesRemaining=StartingLives;State.status=PuzzleStatus.Playing;CurrentState=GameplayState.Playing;LastReward=default;Raise(GameplayEventType.PuzzleStarted);StateChanged?.Invoke();}
         public void MarkCell(int row,int column)
         {
             if(CurrentState!=GameplayState.Playing||Puzzle==null||State==null||!Puzzle.IsInBounds(row,column))return;
@@ -52,7 +54,7 @@ namespace CapybaraGame.Gameplay
 
         public void Pause(){if(CurrentState!=GameplayState.Playing)return;CurrentState=GameplayState.Paused;UnityEngine.Time.timeScale=0f;}
         public void Resume(){if(CurrentState!=GameplayState.Paused)return;CurrentState=GameplayState.Playing;UnityEngine.Time.timeScale=1f;}
-        public void Restart(){if(Puzzle==null)return;UnityEngine.Time.timeScale=1f;LoadLevel(LevelId,ActiveCharacter);}
+        public void Restart(){if(Puzzle==null)return;UnityEngine.Time.timeScale=1f;LoadLevel(LevelId,ActiveCharacter,StartingLives);}
         public void Exit(){UnityEngine.Time.timeScale=1f;if(CurrentState==GameplayState.Completed||CurrentState==GameplayState.Failed)return;CurrentState=GameplayState.NextLevel;}
         public bool TryGetSolutionCell(out int row,out int column){row=-1;column=-1;if(Puzzle==null||Puzzle.solution==null||State==null)return false;for(int r=0;r<Puzzle.rows;r++){int c=Puzzle.solution[r];if(State.placed[r*Puzzle.columns+c]==-1){row=r;column=c;return true;}}return false;}
         public void GrantReward(){if(CurrentState!=GameplayState.Completed)return;CurrentState=GameplayState.Reward;Raise(GameplayEventType.RewardGranted,-1,-1,State.livesRemaining);}
