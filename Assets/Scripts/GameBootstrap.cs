@@ -207,7 +207,7 @@ namespace CapybaraGame
             var face=mascot.AddComponent<CharacterFaceView>(); face.Build(CharacterId.Capybara,save.reducedMotion); face.SetVisible(true);
 
             Label(bg.transform,$"LEVEL {save.unlockedLevel}",24,TextAnchor.MiddleCenter,text,new Vector2(.08f,.53f),new Vector2(.42f,.58f));
-            Label(bg.transform,$"🪙 {save.coins}",24,TextAnchor.MiddleCenter,text,new Vector2(.58f,.53f),new Vector2(.92f,.58f));
+            Label(bg.transform,$"COINS {save.coins}",24,TextAnchor.MiddleCenter,text,new Vector2(.58f,.53f),new Vector2(.92f,.58f));
 
             Button(bg.transform,"PLAY",38,new Color(.55f,.78f,.48f),()=>StartLevel(save.unlockedLevel),new Vector2(.10f,.40f),new Vector2(.90f,.49f));
             Button(bg.transform,"HOW TO PLAY",22,card,ShowRules,new Vector2(.10f,.31f),new Vector2(.48f,.37f));
@@ -270,7 +270,7 @@ namespace CapybaraGame
             Button(bg.transform,"HINT  · 100",20,card,UseHint,new Vector2(.06f,.14f),new Vector2(.29f,.20f));
             Button(bg.transform,"REVEAL  · 175",20,card,UseReveal,new Vector2(.385f,.14f),new Vector2(.615f,.20f));
             Button(bg.transform,"MORE  · 250",20,card,UseExtraToken,new Vector2(.71f,.14f),new Vector2(.94f,.20f));
-            Label(bg.transform,$"🪙 {save.coins}",19,TextAnchor.MiddleCenter,new Color(.45f,.40f,.36f),new Vector2(.25f,.07f),new Vector2(.75f,.12f));
+            Label(bg.transform,$"COINS {save.coins}",19,TextAnchor.MiddleCenter,new Color(.45f,.40f,.36f),new Vector2(.25f,.07f),new Vector2(.75f,.12f));
         }
 
         private static string LifeText(int lives)
