@@ -158,7 +158,11 @@ namespace CapybaraGame.Levels
                     var puzzle = candidate.puzzle;
                     if (band != null && !band.allowedGridSizes.Contains(puzzle.rows)) continue;
                     if (hard && puzzle.difficulty < config.difficultyProfile.MediumMax) continue;
-                    if (ViolatesRecentVariety(puzzle, target, recent, config.variety)) continue;
+                    if (ViolatesRecentVariety(puzzle, target, recent, config.variety))
+                    {
+                        report.SimilarCandidatesRejected++;
+                        continue;
+                    }
 
                     float cost = Math.Abs(puzzle.difficulty - targetScore);
                     if (puzzle.category != target.Style.ToString()) cost += 4f;
