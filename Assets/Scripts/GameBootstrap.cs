@@ -93,7 +93,7 @@ namespace CapybaraGame
             cameraObject.transform.SetParent(transform, false);
             var camera = cameraObject.GetComponent<Camera>();
             camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = Color.black;
+            camera.backgroundColor = background;
             camera.orthographic = true;
             camera.orthographicSize = 5f;
             camera.transform.position = new Vector3(0f, 0f, -10f);
@@ -107,7 +107,7 @@ namespace CapybaraGame
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
             safeAreaRoot = new GameObject("SafeArea", typeof(RectTransform)).GetComponent<RectTransform>();
-            safeAreaRoot.SetParent(safeAreaRoot.transform, false);
+            safeAreaRoot.SetParent(canvas.transform, false);
             safeAreaRoot.anchorMin = Vector2.zero;
             safeAreaRoot.anchorMax = Vector2.one;
             safeAreaRoot.offsetMin = safeAreaRoot.offsetMax = Vector2.zero;
