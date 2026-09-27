@@ -19,7 +19,7 @@ BOOT
 
 ### Progression
 HOME
-→ CURRENT PUZZLE
+→ LEVEL READY
 → PLAYING
 → placement / removal / error
 → SOLVED or FAILED
@@ -123,11 +123,9 @@ Do not add tutorial copy once the player has demonstrated understanding.
 - X marks for eliminated/invalid cells where appropriate
 
 ### Bottom action row
-- Hint
-- Reveal
-- Extra Life
+No purchasing or aid controls during active play.
 
-Each action shows its current coin cost.
+Aids are purchased in the Store before the puzzle starts and may be prepared on the Level Ready screen.
 
 ### Active character selector
 Show the selected character as a small, clear control. Character selection changes appearance only.
@@ -245,7 +243,7 @@ Three explicit tabs:
 ### Aids
 - Hint
 - Reveal
-- Extra Life
+- Recovery resource
 
 Character cards show:
 - portrait
