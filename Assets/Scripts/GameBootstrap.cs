@@ -183,6 +183,8 @@ namespace CapybaraGame
             shadow.effectColor=new Color(.15f,.12f,.10f,.10f); shadow.effectDistance=new Vector2(0,-3); shadow.useGraphicAlpha=true;
             var button=go.GetComponent<Button>();
             button.transition=Selectable.Transition.ColorTint;
+            var feel=go.AddComponent<UIInteractionFeedback>();
+            feel.reducedMotion=save != null && save.reducedMotion;
             button.colors=new ColorBlock{normalColor=fill,highlightedColor=Color.Lerp(fill,Color.white,.12f),pressedColor=Color.Lerp(fill,Color.black,.08f),selectedColor=fill,disabledColor=new Color(fill.r,fill.g,fill.b,.45f),colorMultiplier=1f};
             button.navigation=new Navigation{mode=Navigation.Mode.None};
             if(action!=null)button.onClick.AddListener(action);
