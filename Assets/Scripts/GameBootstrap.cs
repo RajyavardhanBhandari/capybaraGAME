@@ -318,7 +318,7 @@ namespace CapybaraGame
             Label(rules.transform,"3 "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter)+"  •  1 per region  •  1 per row  •  1 per column",17,TextAnchor.MiddleCenter,text,new Vector2(.05f,.52f),new Vector2(.95f,.92f));
             Label(rules.transform,"Characters cannot touch, including diagonally.",16,TextAnchor.MiddleCenter,new Color(.48f,.42f,.38f),new Vector2(.05f,.12f),new Vector2(.95f,.52f));
 
-            if(save.hintAids>0 || save.revealAids>0)
+            if(!dailyMode && !goldenMode && (save.hintAids>0 || save.revealAids>0))
             {
                 Label(bg.transform,"READY YOUR AIDS",15,TextAnchor.MiddleCenter,new Color(.50f,.44f,.40f),new Vector2(.10f,.32f),new Vector2(.90f,.37f));
                 Button(bg.transform,pendingHint?"✓ HINT READY":"HINT  ·  "+save.hintAids,18,pendingHint?new Color(.55f,.78f,.48f):card,()=>{
@@ -596,8 +596,8 @@ namespace CapybaraGame
             {
                 Label(rewardCard.transform,"No treats earned this attempt.",17,TextAnchor.MiddleCenter,new Color(.55f,.45f,.42f),new Vector2(.05f,.52f),new Vector2(.95f,.90f));
                 Label(rewardCard.transform,"Choose one recovery, then return to the puzzle.",15,TextAnchor.MiddleCenter,new Color(.50f,.44f,.40f),new Vector2(.05f,.08f),new Vector2(.95f,.50f));
-                Button(bg.transform,(dailyMode||goldenMode)?"BACK TO HOME":"WATCH AD  +1 "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter).ToUpper(),19,new Color(.55f,.78f,.48f),TryRewardedBerry,new Vector2(.08f,.14f),new Vector2(.48f,.21f));
-                Button(bg.transform,dailyMode||goldenMode?"": "BUY 1  ·  "+BerryReviveCost,19,new Color(.96f,.84f,.54f),BuyBerryRevive,new Vector2(.52f,.14f),new Vector2(.92f,.21f));
+                Button(bg.transform,(dailyMode||goldenMode)?"BACK TO HOME":"WATCH AD  +1 "+CharacterCatalog.ResourceName(gameplay.ActiveCharacter).ToUpper(),19,new Color(.55f,.78f,.48f),dailyMode||goldenMode?ShowHome:TryRewardedBerry,new Vector2(.08f,.14f),new Vector2(.48f,.21f));
+                Button(bg.transform,dailyMode||goldenMode?"BACK TO HOME":"BUY 1  ·  "+BerryReviveCost,19,new Color(.96f,.84f,.54f),dailyMode||goldenMode?ShowHome:BuyBerryRevive,new Vector2(.52f,.14f),new Vector2(.92f,.21f));
                 Button(bg.transform,(dailyMode||goldenMode)?"BACK TO HOME":"RETRY",20,card,()=>dailyMode||goldenMode?ShowHome():StartLevel(gameplay.LevelId),new Vector2(.28f,.07f),new Vector2(.72f,.12f));
             }
         }
