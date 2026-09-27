@@ -21,6 +21,7 @@ namespace CapybaraGame.UI
         private readonly Image[] edges = new Image[4];
         private Action<int, int> clicked;
         private Action<int, int> doubleClicked;
+        private Coroutine pendingSingleTap;
         private CharacterFaceView face;
 
         public void Initialize(int r, int c, Action<int, int> onClick, Action<int, int> onDoubleClick)
@@ -113,8 +114,36 @@ namespace CapybaraGame.UI
         public void OnPointerClick(PointerEventData eventData)
         {
             if (eventData == null) return;
-            if (eventData.clickCount >= 2) doubleClicked?.Invoke(row, column);
-            else clicked?.Invoke(row, column);
+
+            if (eventData.clickCount >= 2)
+            {
+                if (pendingSingleTap != null)
+                {
+                    StopCoroutine(pendingSingleTap);
+                    pendingSingleTap = null;
+                }
+                doubleClicked?.Invoke(row, column);
+                return;
+            }
+
+            if (pendingSingleTap != null) StopCoroutine(pendingSingleTap);
+            pendingSingleTap = StartCoroutine(DelayedSingleTap());
+        }
+
+        private System.Collections.IEnumerator DelayedSingleTap()
+        {
+            yield return new WaitForSecondsRealtime(BoardInteractionPolicy.DoubleTapWindow);
+            pendingSingleTap = null;
+            clicked?.Invoke(row, column);
+        }
+
+        private void OnDisable()
+        {
+            if (pendingSingleTap != null)
+            {
+                StopCoroutine(pendingSingleTap);
+                pendingSingleTap = null;
+            }
         }
 
         private void CreateEdge(string name, int index, Vector2 min, Vector2 max, Vector2 offsetMin, Vector2 offsetMax)
