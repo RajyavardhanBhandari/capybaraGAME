@@ -129,7 +129,7 @@ namespace CapybaraGame.UI
             bool marked = state.marks != null && state.marks[index];
             face.Configure(active, reducedMotion);
             face.SetVisible(occupied);
-            mark.text = marked && !occupied ? "×" : string.Empty;
+            mark.text = (marked && !occupied) || feedbackError ? "×" : string.Empty;
             mark.fontSize = Mathf.Max(28, 120 / puzzle.rows);
             mark.color = feedbackError ? new Color(.94f,.18f,.18f,1f) : Color.white;
             outline.effectColor = selected
