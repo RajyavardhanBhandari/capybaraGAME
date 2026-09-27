@@ -13,6 +13,8 @@ namespace CapybaraGame.Levels
         public int InvalidCandidates;
         public int UniqueCandidates;
         public int SimilarCandidatesRejected;
+        public int DuplicateCandidates;
+        public float DuplicateRate;
         public int SelectedLevels;
         public int HardChallenges;
         public TimeSpan Elapsed;
@@ -119,7 +121,10 @@ namespace CapybaraGame.Levels
 
                 report.GeneratedCandidates++;
                 if (!fingerprints.Add(generation.Puzzle.fingerprint))
+                {
+                    report.DuplicateCandidates++;
                     continue;
+                }
 
                 list.Add(new Candidate { puzzle = generation.Puzzle, sourceIndex = i });
                 report.UniqueCandidates++;
@@ -197,6 +202,9 @@ namespace CapybaraGame.Levels
             }
 
             report.SelectedLevels = selected.Count;
+            report.DuplicateRate = report.GeneratedCandidates == 0
+                ? 0f
+                : report.DuplicateCandidates / (float)report.GeneratedCandidates;
             return selected;
         }
 
